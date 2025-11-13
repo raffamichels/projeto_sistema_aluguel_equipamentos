@@ -1,6 +1,6 @@
-# RentEasy Backend API
+# RentEasy
 
-Backend completo para a plataforma RentEasy - Sistema de aluguel de equipamentos e ferramentas.
+Backend - Sistema de aluguel de equipamentos e ferramentas.
 
 ## Índice
 
