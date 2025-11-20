@@ -1,0 +1,160 @@
+# 01 Definição das Entidades Chave (Modelo RentEasy - 12 Tabelas)
+
+## Escopo do Projeto: Aluguel de Equipamentos (RentEasy)
+
+O modelo físico é projetado com 12 tabelas para garantir a robustez e a complexidade necessária para atender a todos os requisitos do trabalho (Normalização, 4 Constraints, Objetos e 6 Perguntas de Negócio).
+
+---
+
+## I. Resumo das 12 Entidades (Modelo Físico)
+
+| Tabela | Propósito e Ligação Principal |
+| :--- | :--- |
+| **1. Clientes** | Dados cadastrais dos clientes que alugam. |
+| **2. Cargos** | Tabela de apoio para definir os cargos dos Funcionários. |
+| **3. Funcionários** | Dados da equipe interna que processa os aluguéis. |
+| **4. Enderecos** | Endereços completos, isolados para uso por Clientes ou Logística. |
+| **5. Categorias** | Classificação dos Equipamentos. |
+| **6. Equipamentos** | Dados mestres do produto (Modelo, Fabricante). |
+| **7. Estoque** | **Unidades Físicas** do equipamento (N° de Série, Status). |
+| **8. Alugueis** | Transação principal (Pedido, Datas de Início/Fim, Valor Total). |
+| **9. Itens\_Aluguel** | **Relação N:N**. Liga a transação de Aluguel ao item específico do Estoque. |
+| **10. Pagamentos** | Registro de todos os pagamentos e métodos de pagamento. |
+| **11. Manutencoes** | Registra o histórico e custos de manutenção dos itens do Estoque. |
+| **12. Multas** | Registra multas aplicadas por atraso ou danos ao equipamento alugado. |
+
+---
+
+## II. Detalhamento do Modelo Físico (Entidade e Colunas)
+
+### 1. Clientes
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Cliente** | **PK** | INT | Chave Primária |
+| **Nome** | | VARCHAR(100) | |
+| **Tipo\_Pessoa** | **CHECK** | CHAR(1) | 'F' (Física) ou 'J' (Jurídica) |
+| **CPF\_CNPJ** | **UNIQUE** | VARCHAR(18) | |
+| **Email** | | VARCHAR(100) | Login no Front-end (RentEasy) |
+| **Telefone** | | VARCHAR(15) | |
+| **ID\_Endereco** | **FK** | INT | Endereço principal do cliente |
+| **Data\_Cadastro** | **DEFAULT** | DATE | Data de entrada no sistema |
+
+### 2. Cargos
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Cargo** | **PK** | TINYINT | Chave Primária |
+| **Nome\_Cargo** | **UNIQUE** | VARCHAR(50) | Ex: 'Gerente', 'Atendente' |
+| **Nivel\_Acesso** | **CHECK** | TINYINT | Nível para regras de segurança (Ex: 1 a 5) |
+
+### 3. Funcionários
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Funcionario** | **PK** | INT | Chave Primária |
+| **Nome** | | VARCHAR(100) | |
+| **ID\_Cargo** | **FK** | TINYINT | Liga ao nível de acesso |
+| **Login** | **UNIQUE** | VARCHAR(50) | |
+| **Ativo** | **DEFAULT** | BIT | Status (1 ou 0) |
+
+### 4. Enderecos
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Endereco** | **PK** | INT | Chave Primária |
+| **Rua** | | VARCHAR(100) | |
+| **Numero** | | VARCHAR(10) | |
+| **Bairro** | | VARCHAR(50) | |
+| **CEP** | | VARCHAR(9) | |
+| **Cidade** | | VARCHAR(50) | |
+| **Estado** | | CHAR(2) | |
+
+### 5. Categorias
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Categoria** | **PK** | INT | Chave Primária |
+| **Nome** | **UNIQUE** | VARCHAR(50) | Ex: 'Ferramentas Pesadas' |
+| **Descricao** | | VARCHAR(255) | |
+
+### 6. Equipamentos (Produto Mestre)
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Equipamento** | **PK** | INT | Chave Primária |
+| **Nome** | | VARCHAR(100) | Nome comercial do item |
+| **ID\_Categoria** | **FK** | INT | Liga à tabela Categorias |
+| **Fabricante** | | VARCHAR(50) | |
+| **Valor\_Reposicao** | | DECIMAL(10,2) | Usado para seguro e multas por perda |
+| **Ativo** | **CHECK** | BIT | 1 (Ativo) ou 0 (Inativo) |
+
+### 7. Estoque (Unidade Física)
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Estoque** | **PK** | INT | Chave Primária (Identificador da unidade física) |
+| **ID\_Equipamento** | **FK** | INT | Liga ao modelo (Tabela Equipamentos) |
+| **Numero\_Serie** | **UNIQUE** | VARCHAR(50) | Essencial para rastreamento |
+| **Data\_Compra** | | DATE | Usado para depreciação |
+| **Status\_Item** | **CHECK** | VARCHAR(20) | 'Disponível', 'Alugado', 'Em Manutenção' |
+| **Localizacao** | | VARCHAR(50) | Onde o item está no depósito |
+
+### 8. Alugueis (Transação)
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Aluguel** | **PK** | BIGINT | Chave Primária |
+| **ID\_Cliente** | **FK** | INT | |
+| **ID\_Funcionario** | **FK** | INT | Func. que processou o aluguel |
+| **Data\_Inicio** | | DATETIME | |
+| **Data\_Prevista\_Devolucao** | | DATETIME | |
+| **Data\_Devolucao\_Real** | | DATETIME | (Pode ser NULL) |
+| **Valor\_Total** | | DECIMAL(10,2) | |
+| **Status\_Aluguel** | **CHECK** | VARCHAR(20) | 'Aberto', 'Em Curso', 'Finalizado' |
+| **ID\_Endereco\_Entrega** | **FK** | INT | Endereço de entrega |
+
+### 9. Itens\_Aluguel (Relação N:N)
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Aluguel** | **PK, FK** | BIGINT | Parte da PK Composta |
+| **ID\_Estoque** | **PK, FK** | INT | O item físico alugado |
+| **Preco\_Diario** | | DECIMAL(8,2) | Preço do item naquele contrato |
+| **Dias\_Alugados** | | SMALLINT | |
+| **Status\_Devolucao** | **CHECK** | VARCHAR(20) | 'Devolvido', 'Danificado', 'Pendente' |
+
+### 10. Pagamentos
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Pagamento** | **PK** | BIGINT | Chave Primária |
+| **ID\_Aluguel** | **FK** | BIGINT | |
+| **Valor** | | DECIMAL(10,2) | |
+| **Metodo** | **CHECK** | VARCHAR(30) | 'PIX', 'Cartão', 'Boleto' |
+| **Data\_Pagamento** | | DATETIME | |
+| **Status\_Pagamento** | **CHECK** | VARCHAR(20) | 'Aprovado', 'Pendente' |
+
+### 11. Manutencoes
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Manutencao** | **PK** | BIGINT | |
+| **ID\_Estoque** | **FK** | INT | Item que está em manutenção |
+| **Data\_Inicio** | | DATE | |
+| **Data\_Fim** | | DATE | (Pode ser NULL) |
+| **Custo** | | DECIMAL(10,2) | |
+| **Descricao** | | VARCHAR(255) | |
+| **Status\_Manutencao** | | VARCHAR(20) | 'Em Andamento', 'Concluída' |
+
+### 12. Multas
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Multa** | **PK** | BIGINT | |
+| **ID\_Aluguel** | **FK** | BIGINT | Aluguel que gerou a multa |
+| **Tipo\_Multa** | **CHECK** | VARCHAR(50) | 'Atraso', 'Dano\_Leve', 'Dano\_Grave' |
+| **Valor\_Calculado** | | DECIMAL(8,2) | |
+| **Data\_Aplicacao** | **DEFAULT** | DATE | |
+| **Motivo** | | VARCHAR(255) | Justificativa |
+| **Status\_Pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
