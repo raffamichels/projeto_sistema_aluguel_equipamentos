@@ -10,18 +10,18 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 
 | Tabela | Propósito e Ligação Principal |
 | :--- | :--- |
-| **1. Clientes** | Dados cadastrais dos clientes que alugam. |
-| **2. Cargos** | Tabela de apoio para definir os cargos dos Funcionários. |
-| **3. Funcionários** | Dados da equipe interna que processa os aluguéis. |
-| **4. Enderecos** | Endereços completos, isolados para uso por Clientes ou Logística. |
-| **5. Categorias** | Classificação dos Equipamentos. |
-| **6. Equipamentos** | Dados mestres do produto (Modelo, Fabricante). |
-| **7. Estoque** | **Unidades Físicas** do equipamento (N° de Série, Status). |
-| **8. Alugueis** | Transação principal (Pedido, Datas de Início/Fim, Valor Total). |
-| **9. Itens\_Aluguel** | **Relação N:N**. Liga a transação de Aluguel ao item específico do Estoque. |
-| **10. Pagamentos** | Registro de todos os pagamentos e métodos de pagamento. |
-| **11. Manutencoes** | Registra o histórico e custos de manutenção dos itens do Estoque. |
-| **12. Multas** | Registra multas aplicadas por atraso ou danos ao equipamento alugado. |
+| **1. Cliente** | Dados cadastrais dos clientes que alugam. |
+| **2. Funcionários** | Dados da equipe interna que processa os aluguéis. |
+| **3. Endereço** | Endereços completos, isolados para uso por Clientes ou Logística. |
+| **4. Categorias** | Classificação dos Equipamentos. |
+| **5. Equipamento** | Dados mestres do produto (Modelo, Fabricante). |
+| **6. Estoque** | **Unidades Físicas** do equipamento (N° de Série, Status). |
+| **7. Aluguel** | Transação principal (Pedido, Datas de Início/Fim, Valor Total). |
+| **8. Aluguel do Item** | **Relação N:N**. Liga a transação de Aluguel ao item específico do Estoque. |
+| **9. Pagamentos** | Registro de todos os pagamentos e métodos de pagamento. |
+| **10. Manutencoes** | Registra o histórico e custos de manutenção dos itens do Estoque. |
+| **11. Multas** | Registra multas aplicadas por atraso ou danos ao equipamento alugado. |
+| **12. Fornecedores** | Registra fornecedores de materiais e manutenções das ferramentas. |
 
 ---
 
@@ -31,76 +31,68 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Cliente** | **PK** | INT | Chave Primária |
-| **Nome** | | VARCHAR(100) | |
-| **Tipo\_Pessoa** | **CHECK** | CHAR(1) | 'F' (Física) ou 'J' (Jurídica) |
-| **CPF\_CNPJ** | **UNIQUE** | VARCHAR(18) | |
-| **Email** | | VARCHAR(100) | Login no Front-end (RentEasy) |
-| **Telefone** | | VARCHAR(15) | |
-| **ID\_Endereco** | **FK** | INT | Endereço principal do cliente |
-| **Data\_Cadastro** | **DEFAULT** | DATE | Data de entrada no sistema |
+| **cliente_id** | **PK** | INT | Chave Primária |
+| **nome** | | VARCHAR(100) | |
+| **cpf** | **UNIQUE** | VARCHAR(14) | |
+| **email** | | VARCHAR(100) | Login no Front-end (RentEasy) |
+| **telefone** | | VARCHAR(15) | |
 
-### 2. Cargos
+### 2. Funcionário
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Cargo** | **PK** | TINYINT | Chave Primária |
-| **Nome\_Cargo** | **UNIQUE** | VARCHAR(50) | Ex: 'Gerente', 'Atendente' |
-| **Nivel\_Acesso** | **CHECK** | TINYINT | Nível para regras de segurança (Ex: 1 a 5) |
+| **funcionario_id** | **PK** | INT | Chave Primária |
+| **nome** | | VARCHAR(100) | |
+| **cargo** | | VARCHAR(50) | Cargo ocupado pelo funcionário |
+| **data_contratacao** | | DATE | Data da contratação |
 
-### 3. Funcionários
-
-| Coluna | Chave | Tipo Sugerido | Descrição |
-| :--- | :--- | :--- | :--- |
-| **ID\_Funcionario** | **PK** | INT | Chave Primária |
-| **Nome** | | VARCHAR(100) | |
-| **ID\_Cargo** | **FK** | TINYINT | Liga ao nível de acesso |
-| **Login** | **UNIQUE** | VARCHAR(50) | |
-| **Ativo** | **DEFAULT** | BIT | Status (1 ou 0) |
-
-### 4. Enderecos
+### 3. Endereço
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Endereco** | **PK** | INT | Chave Primária |
-| **Rua** | | VARCHAR(100) | |
-| **Numero** | | VARCHAR(10) | |
-| **Bairro** | | VARCHAR(50) | |
-| **CEP** | | VARCHAR(9) | |
-| **Cidade** | | VARCHAR(50) | |
-| **Estado** | | CHAR(2) | |
+| **endereco_id** | **PK** | INT | Chave Primária |
+| **logradouro** | | VARCHAR(100) | |
+| **bairro** | | VARCHAR(50) | |
+| **numero** | | VARCHAR(10) | |
+| **complemento** | | VARCHAR(50) NULL | |
+| **cidade** | | VARCHAR(50) | |
+| **estado** | | CHAR(2) | |
+| **cep** | | VARCHAR(9) | |
 
-### 5. Categorias
-
-| Coluna | Chave | Tipo Sugerido | Descrição |
-| :--- | :--- | :--- | :--- |
-| **ID\_Categoria** | **PK** | INT | Chave Primária |
-| **Nome** | **UNIQUE** | VARCHAR(50) | Ex: 'Ferramentas Pesadas' |
-| **Descricao** | | VARCHAR(255) | |
-
-### 6. Equipamentos (Produto Mestre)
+### 4. Categoria
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Equipamento** | **PK** | INT | Chave Primária |
-| **Nome** | | VARCHAR(100) | Nome comercial do item |
-| **ID\_Categoria** | **FK** | INT | Liga à tabela Categorias |
-| **Fabricante** | | VARCHAR(50) | |
-| **Valor\_Reposicao** | | DECIMAL(10,2) | Usado para seguro e multas por perda |
-| **Ativo** | **CHECK** | BIT | 1 (Ativo) ou 0 (Inativo) |
+| **categoria_id** | **PK** | INT | Chave Primária |
+| **nome_categoria** | **UNIQUE** | VARCHAR(50) | Ex: 'Ferramentas Pesadas' |
+| **descricao** | | VARCHAR(255) | |
 
-### 7. Estoque (Unidade Física)
+### 5. Equipamento
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Estoque** | **PK** | INT | Chave Primária (Identificador da unidade física) |
-| **ID\_Equipamento** | **FK** | INT | Liga ao modelo (Tabela Equipamentos) |
-| **Numero\_Serie** | **UNIQUE** | VARCHAR(50) | Essencial para rastreamento |
-| **Data\_Compra** | | DATE | Usado para depreciação |
-| **Status\_Item** | **CHECK** | VARCHAR(20) | 'Disponível', 'Alugado', 'Em Manutenção' |
-| **Localizacao** | | VARCHAR(50) | Onde o item está no depósito |
+| **equipamento_id** | **PK** | INT | Chave Primária |
+| **nome** | | VARCHAR(100) | Nome comercial do item |
+| **modelo** | | VARCHAR(100) | Modelo do item |
+| **numero_serie** | | VARCHAR(50) | Código do item |
+| **preco_diaria** | | DECIMAL(10,2) | Aluguel diário do item |
+| **status** | | VARCHAR(20) | Situação do item |
+| **categoria_id** | **FK** | INT | Liga a categoria (Tabela Categoria) |
 
-### 8. Alugueis (Transação)
+### 6. Estoque
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **estoque_id** | **PK** | INT | Chave Primária |
+| **equipamento_id** | **FK** | INT | Liga ao equipamento (Tabela Equipamento) |
+| **quantidade_disponivel** | | INT | Controle quantitativo do estoque disponível |
+| **quantidade_total** | | INT | Controle quantitativo do estoque total |
+| **data_ultima_atualizacao** | | DATETIME | Última atualização registrada |
+
+
+---------------------
+
+### 7. Alugueis (Transação)
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -158,3 +150,11 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **Data\_Aplicacao** | **DEFAULT** | DATE | |
 | **Motivo** | | VARCHAR(255) | Justificativa |
 | **Status\_Pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
+
+### 12. Cargos
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **ID\_Cargo** | **PK** | TINYINT | Chave Primária |
+| **Nome\_Cargo** | **UNIQUE** | VARCHAR(50) | Ex: 'Gerente', 'Atendente' |
+| **Nivel\_Acesso** | **CHECK** | TINYINT | Nível para regras de segurança (Ex: 1 a 5) |
