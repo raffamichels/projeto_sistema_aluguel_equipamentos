@@ -17,7 +17,7 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **5. Equipamento** | Dados mestres do produto (Modelo, Fabricante). |
 | **6. Estoque** | **Unidades Físicas** do equipamento (N° de Série, Status). |
 | **7. Aluguel** | Transação principal (Pedido, Datas de Início/Fim, Valor Total). |
-| **8. Aluguel do Item** | **Relação N:N**. Liga a transação de Aluguel ao item específico do Estoque. |
+| **8. Aluguel_Item** | **Relação N:N**. Liga a transação de Aluguel ao item específico do Estoque. |
 | **9. Pagamentos** | Registro de todos os pagamentos e métodos de pagamento. |
 | **10. Manutencoes** | Registra o histórico e custos de manutenção dos itens do Estoque. |
 | **11. Multas** | Registra multas aplicadas por atraso ou danos ao equipamento alugado. |
@@ -89,72 +89,65 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **quantidade_total** | | INT | Controle quantitativo do estoque total |
 | **data_ultima_atualizacao** | | DATETIME | Última atualização registrada |
 
-
----------------------
-
-### 7. Alugueis (Transação)
+### 7. Aluguel
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Aluguel** | **PK** | BIGINT | Chave Primária |
-| **ID\_Cliente** | **FK** | INT | |
-| **ID\_Funcionario** | **FK** | INT | Func. que processou o aluguel |
-| **Data\_Inicio** | | DATETIME | |
-| **Data\_Prevista\_Devolucao** | | DATETIME | |
-| **Data\_Devolucao\_Real** | | DATETIME | (Pode ser NULL) |
-| **Valor\_Total** | | DECIMAL(10,2) | |
-| **Status\_Aluguel** | **CHECK** | VARCHAR(20) | 'Aberto', 'Em Curso', 'Finalizado' |
-| **ID\_Endereco\_Entrega** | **FK** | INT | Endereço de entrega |
+| **aluguel_id** | **PK** | INT | Chave Primária |
+| **cliente_id** | **FK** | INT | |
+| **funcionario_id** | **FK** | INT | |
+| **data_inicio** | | DATETIME | |
+| **data_prevista_devolucao** | | DATETIME | |
+| **data_devolucao_real** | | DATETIME | (Pode ser NULL) |
+| **valor_total** | | DECIMAL(10,2) | |
 
-### 9. Itens\_Aluguel (Relação N:N)
+### 8. Aluguel_Item (Relação N:N)
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Aluguel** | **PK, FK** | BIGINT | Parte da PK Composta |
-| **ID\_Estoque** | **PK, FK** | INT | O item físico alugado |
-| **Preco\_Diario** | | DECIMAL(8,2) | Preço do item naquele contrato |
-| **Dias\_Alugados** | | SMALLINT | |
-| **Status\_Devolucao** | **CHECK** | VARCHAR(20) | 'Devolvido', 'Danificado', 'Pendente' |
+| **aluguel_id** | **PK, FK** | INT | Parte da PK Composta |
+| **equipamento_id** | **PK, FK** | INT | O item alugado |
+| **quantidade** | | INT | |
+| **valor_diaria_acordado** | | DECIMAL(10,2) | |
 
-### 10. Pagamentos
-
-| Coluna | Chave | Tipo Sugerido | Descrição |
-| :--- | :--- | :--- | :--- |
-| **ID\_Pagamento** | **PK** | BIGINT | Chave Primária |
-| **ID\_Aluguel** | **FK** | BIGINT | |
-| **Valor** | | DECIMAL(10,2) | |
-| **Metodo** | **CHECK** | VARCHAR(30) | 'PIX', 'Cartão', 'Boleto' |
-| **Data\_Pagamento** | | DATETIME | |
-| **Status\_Pagamento** | **CHECK** | VARCHAR(20) | 'Aprovado', 'Pendente' |
-
-### 11. Manutencoes
+### 9. Pagamentos
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Manutencao** | **PK** | BIGINT | |
-| **ID\_Estoque** | **FK** | INT | Item que está em manutenção |
-| **Data\_Inicio** | | DATE | |
-| **Data\_Fim** | | DATE | (Pode ser NULL) |
-| **Custo** | | DECIMAL(10,2) | |
-| **Descricao** | | VARCHAR(255) | |
-| **Status\_Manutencao** | | VARCHAR(20) | 'Em Andamento', 'Concluída' |
+| **pagamento_id** | **PK** | INT | Chave Primária |
+| **aluguel_id** | **FK** | INT | |
+| **valor_pago** | | DECIMAL(10,2) | |
+| **metodo_pagamento** | | VARCHAR(50) | 'PIX', 'Cartão', 'Boleto' |
+| **data_pagamento** | | DATETIME | |
 
-### 12. Multas
+### 10. Manutenções
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Multa** | **PK** | BIGINT | |
-| **ID\_Aluguel** | **FK** | BIGINT | Aluguel que gerou a multa |
-| **Tipo\_Multa** | **CHECK** | VARCHAR(50) | 'Atraso', 'Dano\_Leve', 'Dano\_Grave' |
-| **Valor\_Calculado** | | DECIMAL(8,2) | |
-| **Data\_Aplicacao** | **DEFAULT** | DATE | |
-| **Motivo** | | VARCHAR(255) | Justificativa |
-| **Status\_Pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
+| **manutencao_id** | **PK** | INT | |
+| **equipamento_id** | **FK** | INT | Item que está em manutenção |
+| **fornecedor_id** | **FK** | INT | Fornecedor do serviço |
+| **data_inicio** | | DATETIME | |
+| **data_fim** | | DATETIME | |
+| **custo** | | DECIMAL(10,2) | |
+| **descricao_servico** | | VARCHAR(255) | |
 
-### 12. Cargos
+### 11. Multas
 
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
-| **ID\_Cargo** | **PK** | TINYINT | Chave Primária |
-| **Nome\_Cargo** | **UNIQUE** | VARCHAR(50) | Ex: 'Gerente', 'Atendente' |
-| **Nivel\_Acesso** | **CHECK** | TINYINT | Nível para regras de segurança (Ex: 1 a 5) |
+| **multa_id** | **PK** | INT | |
+| **aluguel_id** | **FK** | INT | Aluguel que gerou a multa |
+| **valor_multa** | | DECIMAL(10,2) | |
+| **motivo_multa** | | VARCHAR(255) | Justificativa |
+| **data_aplicacao** | | DATETIME | |
+| **status_pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
+
+### 12. Fornecedores
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **fornecedor_id** | **PK** | INT | Chave Primária |
+| **nome_fantasia** | **UNIQUE** | VARCHAR(100) NOT NULL | |
+| **cnpj** | **UNIQUE** | VARCHAR(18) NOT NULL | |
+| **telefone** | | VARCHAR(15) | |
