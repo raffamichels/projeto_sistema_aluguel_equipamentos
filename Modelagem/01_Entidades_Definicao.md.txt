@@ -33,9 +33,13 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | :--- | :--- | :--- | :--- |
 | **cliente_id** | **PK** | INT | Chave Primária |
 | **nome** | | VARCHAR(100) | |
-| **cpf** | **UNIQUE** | VARCHAR(14) | |
+| **cpf** | **UNIQUE** | CHAR(11) | |
 | **email** | | VARCHAR(100) | Login no Front-end (RentEasy) |
 | **telefone** | | VARCHAR(15) | |
+-- Constraint adicional (UNIQUE) para cpf
+ALTER TABLE Clientes
+ADD CONSTRAINT UQ_CLIENTE_CPF UNIQUE (cpf);
+
 
 ### 2. Funcionário
 
@@ -45,6 +49,12 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **nome** | | VARCHAR(100) | |
 | **cargo** | | VARCHAR(50) | Cargo ocupado pelo funcionário |
 | **data_contratacao** | | DATE | Data da contratação |
+-- ALTERAÇÃO: CHECK para garantir que a data de contratação não seja futura.
+    CONSTRAINT CK_FUNC_CONTRATACAO CHECK (dt_contratacao <= GETDATE())
+);
+-- ALTERAÇÃO: DEFAULT para data de contratação
+ALTER TABLE Funcionarios
+ADD CONSTRAINT DF_FUNC_CONTRATACAO DEFAULT GETDATE() FOR dt_contratacao;
 
 ### 3. Endereço
 
@@ -57,7 +67,8 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **complemento** | | VARCHAR(50) NULL | |
 | **cidade** | | VARCHAR(50) | |
 | **estado** | | CHAR(2) | |
-| **cep** | | VARCHAR(9) | |
+| **cep** | | VARCHAR(8) | |
+-- Alteração: Cep agora é Char(8)
 
 ### 4. Categoria
 
@@ -66,6 +77,9 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **categoria_id** | **PK** | INT | Chave Primária |
 | **nome_categoria** | **UNIQUE** | VARCHAR(50) | Ex: 'Ferramentas Pesadas' |
 | **descricao** | | VARCHAR(255) | |
+-- CONSTRAINT ADICIONAL (UNIQUE)
+ALTER TABLE Categoria
+ADD CONSTRAINT UQ_CAT_NOME UNIQUE (nome_categoria);
 
 ### 5. Equipamento
 
@@ -78,6 +92,12 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **preco_diaria** | | DECIMAL(10,2) | Aluguel diário do item |
 | **status** | | VARCHAR(20) | Situação do item |
 | **categoria_id** | **FK** | INT | Liga a categoria (Tabela Categoria) |
+-- FK: Liga à Categoria
+ALTER TABLE Equipamento
+ADD CONSTRAINT FK_EQUIP_CAT FOREIGN KEY (categoria_id) REFERENCES Categoria(categoria_id);
+-- ALTERAÇÃO: CHECK para garantir preço positivo
+ALTER TABLE Equipamento
+ADD CONSTRAINT CK_PRECO_MINIMO CHECK (preco_diaria > 0.00);
 
 ### 6. Estoque
 
@@ -88,6 +108,16 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **quantidade_disponivel** | | INT | Controle quantitativo do estoque disponível |
 | **quantidade_total** | | INT | Controle quantitativo do estoque total |
 | **data_ultima_atualizacao** | | DATETIME | Última atualização registrada |
+-- FK: Liga ao Equipamento
+ALTER TABLE Estoque
+ADD CONSTRAINT FK_ESTOQUE_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id);
+-- ALTERAÇÃO: CHECK para evitar estoque negativo
+ALTER TABLE Estoque
+ADD CONSTRAINT CK_ESTOQUE_LIMITES CHECK (quant_disponivel >= 0 AND quant_disponivel <= quant_total);
+-- ALTERAÇÃO: DEFAULT para data de revisão
+ALTER TABLE Estoque
+ADD CONSTRAINT DF_ESTOQUE_ATUAL DEFAULT GETDATE() FOR data_revisao;
+
 
 ### 7. Aluguel
 
@@ -100,6 +130,17 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **data_prevista_devolucao** | | DATETIME | |
 | **data_devolucao_real** | | DATETIME | (Pode ser NULL) |
 | **valor_total** | | DECIMAL(10,2) | |
+-- FKs: Liga a Clientes e Funcionários
+ALTER TABLE Aluguel
+ADD CONSTRAINT FK_ALUGUEL_CLIENTE FOREIGN KEY (cliente_id) REFERENCES Clientes(cliente_id),
+    CONSTRAINT FK_ALUGUEL_FUNC FOREIGN KEY (funcionario_id) REFERENCES Funcionarios(funcionario_id);
+-- ALTERAÇÃO: DEFAULT para data de início
+ALTER TABLE Aluguel
+ADD CONSTRAINT DF_ALUGUEL_INICIO DEFAULT GETDATE() FOR data_inicio;
+-- ALTERAÇÃO: CHECK para garantir que a devolução prevista não seja anterior ao início
+ALTER TABLE Aluguel
+ADD CONSTRAINT CK_DEVOL_DATA CHECK (data_prevista_devolucao >= data_inicio);
+
 
 ### 8. Aluguel_Item (Relação N:N)
 
@@ -109,6 +150,13 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **equipamento_id** | **PK, FK** | INT | O item alugado |
 | **quantidade** | | INT | |
 | **valor_diaria_acordado** | | DECIMAL(10,2) | |
+-- FKs: Liga a Aluguel e Equipamento
+ALTER TABLE Aluguel_Item
+ADD CONSTRAINT FK_ITEM_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id),
+    CONSTRAINT FK_ITEM_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id);
+-- ALTERAÇÃO: CHECK para quantidade
+ALTER TABLE Aluguel_Item
+ADD CONSTRAINT CK_ITEM_QUANTIDADE CHECK (quantidade > 0);
 
 ### 9. Pagamentos
 
@@ -119,6 +167,15 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **valor_pago** | | DECIMAL(10,2) | |
 | **metodo_pagamento** | | VARCHAR(50) | 'PIX', 'Cartão', 'Boleto' |
 | **data_pagamento** | | DATETIME | |
+-- FK: Liga ao Aluguel
+ALTER TABLE Pagamento
+ADD CONSTRAINT FK_PAGTO_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id);
+-- ALTERAÇÃO: CHECK para método de pagamento
+ALTER TABLE Pagamento
+ADD CONSTRAINT CK_METODO_VALIDO CHECK (metodo_pagamento IN ('PIX', 'Cartão', 'Boleto'));
+-- ALTERAÇÃO: DEFAULT para data de pagamento
+ALTER TABLE Pagamento
+ADD CONSTRAINT DF_DT_PAGAMENTO DEFAULT GETDATE() FOR dt_pagamento;
 
 ### 10. Manutenções
 
@@ -131,6 +188,14 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **data_fim** | | DATETIME | |
 | **custo** | | DECIMAL(10,2) | |
 | **descricao_servico** | | VARCHAR(255) | |
+-- FKs: Liga ao Equipamento e Fornecedor
+ALTER TABLE Manutencao
+ADD CONSTRAINT FK_MANUT_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id),
+    CONSTRAINT FK_MANUT_FORN FOREIGN KEY (fornecedor_id) REFERENCES Fornecedores(fornecedor_id);
+-- ALTERAÇÃO: CHECK para custo
+ALTER TABLE Manutencao
+ADD CONSTRAINT CK_MANUT_CUSTO CHECK (custo >= 0);
+
 
 ### 11. Multas
 
@@ -142,6 +207,15 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | **motivo_multa** | | VARCHAR(255) | Justificativa |
 | **data_aplicacao** | | DATETIME | |
 | **status_pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
+-- FK: Liga ao Aluguel
+ALTER TABLE Multas
+ADD CONSTRAINT FK_MULTA_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id);
+-- ALTERAÇÃO: CHECK para valor
+ALTER TABLE Multas
+ADD CONSTRAINT CK_MULTA_VALOR CHECK (valor_multa > 0.00);
+-- ALTERAÇÃO: DEFAULT para data
+ALTER TABLE Multas
+ADD CONSTRAINT DF_MULTA_DATA DEFAULT GETDATE() FOR data_aplicacao;
 
 ### 12. Fornecedores
 
@@ -149,5 +223,9 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | :--- | :--- | :--- | :--- |
 | **fornecedor_id** | **PK** | INT | Chave Primária |
 | **nome_fantasia** | **UNIQUE** | VARCHAR(100) NOT NULL | |
-| **cnpj** | **UNIQUE** | VARCHAR(18) NOT NULL | |
+--CNPJ alterado para char(14)
+| **cnpj** | **UNIQUE** | CHAR(14) NOT NULL | |
 | **telefone** | | VARCHAR(15) | |
+-- CONSTRAINT ADICIONAL (UNIQUE) para CNPJ
+ALTER TABLE Fornecedores
+ADD CONSTRAINT UQ_FORN_CNPJ UNIQUE (cnpj);
