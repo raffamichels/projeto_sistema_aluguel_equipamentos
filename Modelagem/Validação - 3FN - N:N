@@ -10,4 +10,4 @@ Validação: 3ª Forma Normal (3FN) e Tabelas N:N Corretas do Modelo Físico
   Regra: ocorre quando vários registros de uma entidade podem se relacionar com vários registros de outra entidade ao mesmo tempo. Em bancos de dados relacionais, esse tipo de relação deve ser representado por meio de uma tabela intermediária.
 
   Análise da Relação: Foi identificada uma relação N:N entre as entidades aluguel e equipamento. Essa é uma relação comum no contexto do negócio, já que um único aluguel pode incluir vários equipamentos, e um mesmo equipamento pode participar de diferentes aluguéis ao longo do tempo.
-    A relação N:N foi devidamente tratada utilizando a tabela intermediária ALUGUEL_DO_ITEM, garantindo normalização e integridade dos 
+    A relação N:N foi devidamente tratada utilizando a tabela intermediária ALUGUEL_DO_ITEM, garantindo normalização e integridade dos dos dados, pois a tabela contém as chaves estrangeiras de ambas as entidades (aluguel_id e equipamento_id), além de atributos próprios da relação, como quantidade e valor_diaria, representando corretamente o vínculo entre os registros. 
