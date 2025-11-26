@@ -105,9 +105,9 @@ ADD CONSTRAINT CK_PRECO_MINIMO CHECK (preco_diaria > 0.00);
 | :--- | :--- | :--- | :--- |
 | **estoque_id** | **PK** | INT | Chave Primária |
 | **equipamento_id** | **FK** | INT | Liga ao equipamento (Tabela Equipamento) |
-| **quantidade_disponivel** | | INT | Controle quantitativo do estoque disponível |
-| **quantidade_total** | | INT | Controle quantitativo do estoque total |
-| **data_ultima_atualizacao** | | DATETIME | Última atualização registrada |
+| **quant_disponivel** | | SMALLINT | Controle quantitativo do estoque disponível |
+| **quant_total** | | SMALLINT | Controle quantitativo do estoque total |
+| **data_revisao** | | DATETIME | Última atualização registrada |
 -- FK: Liga ao Equipamento
 ALTER TABLE Estoque
 ADD CONSTRAINT FK_ESTOQUE_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id);
@@ -127,8 +127,7 @@ ADD CONSTRAINT DF_ESTOQUE_ATUAL DEFAULT GETDATE() FOR data_revisao;
 | **cliente_id** | **FK** | INT | |
 | **funcionario_id** | **FK** | INT | |
 | **data_inicio** | | DATETIME | |
-| **data_prevista_devolucao** | | DATETIME | |
-| **data_devolucao_real** | | DATETIME | (Pode ser NULL) |
+| **data_devolucao** | | DATETIME | |
 | **valor_total** | | DECIMAL(10,2) | |
 -- FKs: Liga a Clientes e Funcionários
 ALTER TABLE Aluguel
@@ -148,8 +147,8 @@ ADD CONSTRAINT CK_DEVOL_DATA CHECK (data_prevista_devolucao >= data_inicio);
 | :--- | :--- | :--- | :--- |
 | **aluguel_id** | **PK, FK** | INT | Parte da PK Composta |
 | **equipamento_id** | **PK, FK** | INT | O item alugado |
-| **quantidade** | | INT | |
-| **valor_diaria_acordado** | | DECIMAL(10,2) | |
+| **quantidade** | | SMALLINT | |
+| **valor_diaria** | | DECIMAL(10,2) | |
 -- FKs: Liga a Aluguel e Equipamento
 ALTER TABLE Aluguel_Item
 ADD CONSTRAINT FK_ITEM_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id),
@@ -166,7 +165,7 @@ ADD CONSTRAINT CK_ITEM_QUANTIDADE CHECK (quantidade > 0);
 | **aluguel_id** | **FK** | INT | |
 | **valor_pago** | | DECIMAL(10,2) | |
 | **metodo_pagamento** | | VARCHAR(50) | 'PIX', 'Cartão', 'Boleto' |
-| **data_pagamento** | | DATETIME | |
+| **dt_pagamento** | | DATETIME | |
 -- FK: Liga ao Aluguel
 ALTER TABLE Pagamento
 ADD CONSTRAINT FK_PAGTO_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id);
@@ -184,10 +183,10 @@ ADD CONSTRAINT DF_DT_PAGAMENTO DEFAULT GETDATE() FOR dt_pagamento;
 | **manutencao_id** | **PK** | INT | |
 | **equipamento_id** | **FK** | INT | Item que está em manutenção |
 | **fornecedor_id** | **FK** | INT | Fornecedor do serviço |
-| **data_inicio** | | DATETIME | |
-| **data_fim** | | DATETIME | |
+| **dt_inicio** | | DATETIME | |
+| **dt_final** | | DATETIME | |
 | **custo** | | DECIMAL(10,2) | |
-| **descricao_servico** | | VARCHAR(255) | |
+| **descricao** | | VARCHAR(255) | |
 -- FKs: Liga ao Equipamento e Fornecedor
 ALTER TABLE Manutencao
 ADD CONSTRAINT FK_MANUT_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id),
@@ -204,8 +203,8 @@ ADD CONSTRAINT CK_MANUT_CUSTO CHECK (custo >= 0);
 | **multa_id** | **PK** | INT | |
 | **aluguel_id** | **FK** | INT | Aluguel que gerou a multa |
 | **valor_multa** | | DECIMAL(10,2) | |
-| **motivo_multa** | | VARCHAR(255) | Justificativa |
-| **data_aplicacao** | | DATETIME | |
+| **descricao** | | VARCHAR(255) | Justificativa |
+| **dt_multa** | | DATETIME | |
 | **status_pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
 -- FK: Liga ao Aluguel
 ALTER TABLE Multas
@@ -222,7 +221,7 @@ ADD CONSTRAINT DF_MULTA_DATA DEFAULT GETDATE() FOR data_aplicacao;
 | Coluna | Chave | Tipo Sugerido | Descrição |
 | :--- | :--- | :--- | :--- |
 | **fornecedor_id** | **PK** | INT | Chave Primária |
-| **nome_fantasia** | **UNIQUE** | VARCHAR(100) NOT NULL | |
+| **nome** | **UNIQUE** | VARCHAR(100) NOT NULL | |
 --CNPJ alterado para char(14)
 | **cnpj** | **UNIQUE** | CHAR(14) NOT NULL | |
 | **telefone** | | VARCHAR(15) | |
