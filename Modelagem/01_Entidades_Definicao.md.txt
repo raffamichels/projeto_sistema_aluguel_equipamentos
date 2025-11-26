@@ -33,7 +33,7 @@ O modelo físico é projetado com 12 tabelas para garantir a robustez e a comple
 | :--- | :--- | :--- | :--- |
 | **cliente_id** | **PK** | INT | Chave Primária |
 | **nome** | | VARCHAR(100) | |
-| **cpf** | **UNIQUE** | CHAR(11) | |
+| **cpf** | **UNIQUE** | CHAR(14) | |
 | **email** | | VARCHAR(100) | Login no Front-end (RentEasy) |
 | **telefone** | | VARCHAR(15) | |
 -- Constraint adicional (UNIQUE) para cpf
@@ -222,7 +222,7 @@ ADD CONSTRAINT DF_MULTA_DATA DEFAULT GETDATE() FOR data_aplicacao;
 | :--- | :--- | :--- | :--- |
 | **fornecedor_id** | **PK** | INT | Chave Primária |
 | **nome** | **UNIQUE** | VARCHAR(100) NOT NULL | |
---CNPJ alterado para char(14)
+--CNPJ alterado para char(18)
 | **cnpj** | **UNIQUE** | CHAR(14) NOT NULL | |
 | **telefone** | | VARCHAR(15) | |
 -- CONSTRAINT ADICIONAL (UNIQUE) para CNPJ
