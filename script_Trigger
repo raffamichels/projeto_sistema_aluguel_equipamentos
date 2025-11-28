@@ -1,0 +1,20 @@
+CREATE TRIGGER TRG_Equipamento_Em_Manutencao
+ON MANUTENCAO
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Atualiza o status do equipamento que acabou de receber um registro de manutenção
+    UPDATE EQUIPAMENTO
+    SET status = 'Em Manutenção'
+    WHERE equipamento_id IN (SELECT equipamento_id FROM inserted);
+END;
+GO
+
+
+Justificativa:
+Essa trigger automatiza o processo de atualização do status dos equipamentos. 
+Sempre que uma manutenção é registrada, o próprio banco já altera o status para “Em Manutenção”. 
+Isso ajuda a evitar erros manuais e garante que o sistema não permita o uso ou aluguel de um item que está passando por manutenção. 
+Além disso, mantém as informações do estoque sempre atualizadas sem depender de ações manuais.
