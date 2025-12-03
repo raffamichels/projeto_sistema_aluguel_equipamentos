@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Aluguéis Ativos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Estilos Globais */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background-color: #f7f7f9;
+            color: #333;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Cabeçalho */
+        h1 { 
+            font-size: 28px; 
+            color: #2563eb; 
+            border-bottom: 2px solid #2563eb; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px;
+        }
+        .back-link {
+            text-decoration: none;
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: inline-block;
+            transition: color 0.3s;
+        }
+        .back-link:hover {
+            color: #1f2937;
+        }
+
+        /* Tabela Estilizada */
+        .styled-table { 
+            width: 100%; 
+            border-collapse: separate; /* Permite bordas arredondadas e espaçamento */
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        /* Cabeçalho da Tabela */
+        .styled-table thead th { 
+            background-color: #2563eb; 
+            color: white; 
+            padding: 15px 20px; 
+            text-align: left; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        
+        /* Corpo da Tabela */
+        .styled-table tbody tr { 
+            border-bottom: 1px solid #e5e7eb; 
+            transition: background-color 0.2s;
+        }
+        
+        /* Efeito Zebra e Hover */
+        .styled-table tbody tr:nth-child(even) {
+            background-color: #f9fafb; /* Linhas zebradas */
+        }
+        .styled-table tbody tr:hover {
+            background-color: #f0f4ff; /* Efeito hover suave */
+        }
+
+        .styled-table tbody td { 
+            padding: 15px 20px; 
+            font-size: 14px;
+        }
+
+        /* Destaques */
+        .value-highlight {
+            font-weight: bold;
+            color: #10b981; /* Verde para valores positivos (Receita) */
+        }
+        .id-cell {
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .date-cell {
+            color: #6b7280;
+        }
+
+        /* Mensagens */
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #f5c6cb;
+            font-weight: 600; 
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #6b7280;
+            font-size: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .empty-state-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsividade (Ajustes para telas menores) */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .styled-table thead {
+                display: none; /* Oculta o cabeçalho em telas pequenas */
+            }
+            .styled-table, .styled-table tbody, .styled-table tr, .styled-table td {
+                display: block;
+                width: 100%;
+            }
+            .styled-table tr {
+                margin-bottom: 15px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+            }
+            .styled-table td {
+                text-align: right;
+                padding: 10px 15px;
+                border-bottom: 1px dotted #ccc;
+            }
+            .styled-table td:before {
+                content: attr(data-label); /* Mostra o cabeçalho como label */
+                float: left;
+                font-weight: bold;
+                text-transform: uppercase;
+                font-size: 12px;
+                color: #6b7280;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Aluguéis Ativos (Em Aberto) 📑</h1>
+        <a href="/" class="back-link">← Voltar ao Menu Principal</a>
+        
+        {% if error %}
+            <p class="error">Falha ao carregar dados: {{ error }}</p>
+        {% elif alugueis|length > 0 %}
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Data Início</th>
+                        <th>Valor Total (R$)</th>
+                        <th>Funcionário</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aluguel in alugueis %}
+                        <tr>
+                            <td data-label="ID" class="id-cell">#{{ aluguel.aluguel_id }}</td>
+                            <td data-label="Cliente"><strong>{{ aluguel.Cliente }}</strong></td>
+                            <td data-label="Data Início" class="date-cell">{{ aluguel.data_inicio | default("N/A") }}</td>
+                            <td data-label="Valor Total" class="value-highlight">{{ "R$ %.2f" % aluguel.valor_total }}</td>
+                            <td data-label="Funcionário">{{ aluguel.Funcionario }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">✅</div>
+                <p>Nenhum aluguel ativo encontrado no momento. Todos os equipamentos estão de volta!</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Finalizar Aluguel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #3498db; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+        .info-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #3498db; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #34495e; }
+        input[type="number"], input[type="date"] { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        input[type="number"]:focus, input[type="date"]:focus { 
+            border-color: #3498db; 
+            outline: none;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        button { 
+            background: linear-gradient(to right, #27ae60, #2ecc71);
+            color: white; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            width: 100%; 
+            font-size: 18px; 
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover { 
+            background: linear-gradient(to right, #229954, #27ae60);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button:active { 
+            transform: translateY(0);
+        }
+        #message { 
+            margin-top: 25px; 
+            padding: 20px; 
+            border-radius: 8px; 
+            font-weight: bold;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+            border-left: 5px solid #28a745;
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb;
+            border-left: 5px solid #dc3545;
+        }
+        .info { 
+            background-color: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb;
+            border-left: 5px solid #17a2b8;
+        }
+        .result-details {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 5px;
+            border: 1px dashed #ccc;
+        }
+        .multa-box {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #ffeaa7;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Voltar ao Menu Principal</a>
+        <h1>🏁 Finalizar Aluguel</h1>
+        
+        <div class="info-box">
+            <p><strong>Ação:</strong> Executa a <b>SP_FinalizarAluguel</b></p>
+            <p><strong>Processo:</strong> Calcula multas por atraso, atualiza valor total, registra multa (se houver) e libera equipamentos no estoque.</p>
+        </div>
+        
+        <form id="rentalForm">
+            <div class="form-group">
+                <label for="aluguel_id">📋 ID do Aluguel (Em aberto):</label>
+                <input type="number" id="aluguel_id" required min="1" placeholder="Ex: 1001">
+                <small>Digite o ID do aluguel que deseja finalizar</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="funcionario_id">👨‍💼 ID do Funcionário Responsável:</label>
+                <input type="number" id="funcionario_id" required min="1" placeholder="Ex: 101">
+                <small>ID do funcionário que está processando a devolução</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="data_devolucao">📅 Data de Devolução:</label>
+                <input type="date" id="data_devolucao">
+                <small>Opcional - Se não informar, será usada a data atual</small>
+            </div>
+            
+            <button type="submit" id="submitBtn">
+                <span id="btnText">✅ Finalizar Aluguel e Processar Devolução</span>
+                <span id="btnSpinner" style="display:none;"><span class="spinner"></span> Processando...</span>
+            </button>
+        </form>
+
+        <div id="message"></div>
+        
+        <div id="helpInfo" style="margin-top: 30px; padding: 15px; background: #e8f4fc; border-radius: 6px; display: none;">
+            <h3 style="margin-top: 0; color: #2c3e50;">📋 Aluguéis Ativos Disponíveis:</h3>
+            <div id="activeRentalsList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Carregar aluguéis ativos ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/consulta/alugueis_ativos')
+                .then(response => response.text())
+                .then(html => {
+                    // Extrair dados da tabela de aluguéis ativos
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const rows = doc.querySelectorAll('table tbody tr');
+                    
+                    if (rows.length > 0) {
+                        const helpInfo = document.getElementById('helpInfo');
+                        const activeRentalsList = document.getElementById('activeRentalsList');
+                        
+                        let listHTML = '<ul style="margin: 0; padding-left: 20px;">';
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length >= 5) {
+                                const aluguelId = cells[0].textContent.trim();
+                                const cliente = cells[1].textContent.trim();
+                                const dataInicio = cells[2].textContent.trim();
+                                const valorTotal = cells[3].textContent.trim();
+                                const funcionario = cells[4].textContent.trim();
+                                
+                                listHTML += `<li>
+                                    <strong>ID ${aluguelId}</strong>: ${cliente} 
+                                    (Início: ${dataInicio}, Valor: ${valorTotal}, Func: ${funcionario})
+                                </li>`;
+                            }
+                        });
+                        listHTML += '</ul>';
+                        
+                        activeRentalsList.innerHTML = listHTML;
+                        helpInfo.style.display = 'block';
+                    }
+                })
+                .catch(error => console.log('Não foi possível carregar aluguéis ativos:', error));
+        });
+
+        document.getElementById('rentalForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const aluguelId = document.getElementById('aluguel_id').value;
+            const funcionarioId = document.getElementById('funcionario_id').value;
+            const dataDevolucao = document.getElementById('data_devolucao').value;
+            const messageDiv = document.getElementById('message');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            
+            if (!aluguelId || !funcionarioId) {
+                showMessage('Por favor, preencha todos os campos obrigatórios.', 'error');
+                return;
+            }
+
+            const dataToSend = {
+                aluguel_id: parseInt(aluguelId),
+                funcionario_id: parseInt(funcionarioId),
+                data_devolucao: dataDevolucao || null
+            };
+
+            // Mostrar estado de carregamento
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'inline-block';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
+            
+            messageDiv.style.display = 'block';
+            messageDiv.textContent = 'Processando devolução...';
+            messageDiv.className = 'info';
+
+            fetch('/api/finalizar_aluguel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Restaurar botão
+                btnText.style.display = 'inline-block';
+                btnSpinner.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                
+                if (data.success) {
+                    messageDiv.className = 'success';
+                    
+                    let msg = `<strong>✅ Sucesso!</strong><br>${data.message}`;
+                    
+                    // Adicionar detalhes da multa se houver
+                    if (data.valor_multa && data.valor_multa !== 'R$ 0.00') {
+                        msg += `<div class="multa-box">
+                            <strong>💸 Multa Aplicada:</strong> ${data.valor_multa}
+                        </div>`;
+                    }
+                    
+                    // Adicionar informações adicionais
+                    msg += `<div class="result-details">
+                        <strong>📊 Detalhes:</strong><br>
+                        • Aluguel ID: ${aluguelId}<br>
+                        • Funcionário ID: ${funcionarioId}<br>
+                        • Data de Devolução: ${dataDevolucao || 'Data atual'}
+                    </div>`;
+                    
+                    // Limpar formulário após sucesso
+                    document.getElementById('rentalForm').reset();
+                    
+                    messageDiv.innerHTML = msg;
+                } else {
+                    messageDiv.className = 'error';
+                    
+                    let errorMsg = data.message || 'Erro desconhecido';
+                    
+                    // Melhorar mensagens de erro comuns
+                    if (errorMsg.includes('não encontrado')) {
+                        errorMsg = `❌ Aluguel não encontrado. Verifique se o ID ${aluguelId} existe e está ativo.`;
+                    } else if (errorMsg.includes('já finalizado')) {
+                        errorMsg = `⚠️ O aluguel ${aluguelId} já foi finalizado anteriormente.`;
+                    } else if (errorMsg.includes('conexão')) {
+                        errorMsg = '🔌 Erro de conexão com o servidor. Verifique sua rede.';
+                    }
+                    
+                    messageDiv.innerHTML = `<strong>❌ Falha na Operação:</strong><br>${errorMsg}`;
+                }
+            })
+            .catch(error => {
+                // Restaurar botão em caso de erro
+                btnText.style.display = 'inline-block';
+                btnSpinner.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                
+                messageDiv.className = 'error';
+                messageDiv.innerHTML = `<strong>🚨 Erro de Conexão:</strong><br>Não foi possível conectar ao servidor. Verifique:<br>
+                    1. Se o servidor está rodando<br>
+                    2. Sua conexão com a internet<br>
+                    3. Tente novamente em alguns instantes<br><br>
+                    <small>Detalhe técnico: ${error.message}</small>`;
+            });
+        });
+
+        // Função auxiliar para mostrar mensagens
+        function showMessage(text, type = 'info') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = type;
+            messageDiv.style.display = 'block';
+        }
+
+        // Preencher data atual como padrão
+        document.getElementById('data_devolucao').valueAsDate = new Date();
+    </script>
+</body>
+</html>

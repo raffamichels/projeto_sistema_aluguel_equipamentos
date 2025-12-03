@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Equipamentos Disponíveis</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Equipamentos Disponíveis para Aluguel ✅</h1>
+        <p><a href="/">← Voltar ao Menu</a></p>
+        
+        {% if error %}
+            <p class="error">ERRO: {{ error }}</p>
+        {% elif equipamentos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Modelo</th>
+                        <th>Categoria</th>
+                        <th>Diária (R$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for eq in equipamentos %}
+                        <tr>
+                            <td>{{ eq.equipamento_id }}</td>
+                            <td>{{ eq.nome }}</td>
+                            <td>{{ eq.modelo }}</td>
+                            <td>{{ eq.nome_categoria }}</td>
+                            <td>{{ "R$ %.2f" % eq.preco_diaria }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum equipamento disponível encontrado no momento.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

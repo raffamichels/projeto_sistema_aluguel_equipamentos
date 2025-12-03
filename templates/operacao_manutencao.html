@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Manutenção</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        h1 { text-align: center; color: #333; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input[type="number"], input[type="text"], textarea, select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #ffc107; color: #333; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 20px; font-size: 16px; }
+        button:hover { background-color: #e0a800; }
+        #message { margin-top: 20px; padding: 15px; border-radius: 4px; font-weight: bold; }
+        .success { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .error { background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Registrar Manutenção (Trigger) 🔧</h1>
+        <p><a href="/">← Voltar ao Menu</a></p>
+        <p>Ao registrar, a <b>TRG_Equipamento_Em_Manutencao</b> será acionada, alterando o status do equipamento para "Em Manutenção".</p>
+        
+        <form id="manutencaoForm">
+            <label for="equipamento_id">ID do Equipamento:</label>
+            <input type="number" id="equipamento_id" required>
+
+            <label for="fornecedor_id">ID do Fornecedor:</label>
+            <input type="number" id="fornecedor_id" required>
+
+            <label for="custo">Custo Estimado (Decimal):</label>
+            <input type="number" id="custo" step="0.01" required>
+
+            <label for="descricao">Descrição:</label>
+            <textarea id="descricao" rows="3" required></textarea>
+
+            <button type="submit">Iniciar Manutenção</button>
+        </form>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        document.getElementById('manutencaoForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const equipamentoId = document.getElementById('equipamento_id').value;
+            const fornecedorId = document.getElementById('fornecedor_id').value;
+            const custo = document.getElementById('custo').value;
+            const descricao = document.getElementById('descricao').value;
+            const messageDiv = document.getElementById('message');
+
+            const dataToSend = {
+                equipamento_id: parseInt(equipamentoId),
+                fornecedor_id: parseInt(fornecedorId),
+                custo: parseFloat(custo),
+                descricao: descricao
+            };
+
+            messageDiv.textContent = 'Processando...';
+            messageDiv.className = '';
+
+            fetch('/api/registrar_manutencao', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.className = 'success';
+                    messageDiv.textContent = data.message;
+                } else {
+                    messageDiv.className = 'error';
+                    messageDiv.textContent = `Falha na Operação: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                messageDiv.className = 'error';
+                messageDiv.textContent = `Erro de Conexão: ${error}`;
+            });
+        });
+    </script>
+</body>
+</html>

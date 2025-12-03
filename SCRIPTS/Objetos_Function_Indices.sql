@@ -8,6 +8,7 @@ BEGIN
     DECLARE @CustoDiarioTotal DECIMAL(10, 2);  
     DECLARE @ValorRealFinal DECIMAL(10, 2);
   
+    -- 1. Obtém as datas do aluguel
     SELECT   
         @DataInicio = data_inicio,  
         @DataDevolucao = data_devolucao  
@@ -16,26 +17,25 @@ BEGIN
     WHERE   
         aluguel_id = @AluguelID;
       
+    -- Se a devolução for nula (aluguel ativo), retorna zero
     IF @DataDevolucao IS NULL  
         RETURN 0.00;
   
+    -- 2. Calcula a duração em dias
     SET @DuracaoEmDias = DATEDIFF(day, @DataInicio, @DataDevolucao);
       
+    -- Garante que aluguéis de zero dias (início e fim no mesmo dia) contem como 1 dia
     IF @DuracaoEmDias = 0  
         SET @DuracaoEmDias = 1;
       
+    -- 3. Calcula o custo diário total dos itens
     SELECT @CustoDiarioTotal = ISNULL(SUM(quantidade * valor_diaria), 0)  
     FROM ALUGUEL_ITEM  
     WHERE aluguel_id = @AluguelID;
       
+    -- 4. Calcula o valor final
     SET @ValorRealFinal = @CustoDiarioTotal * @DuracaoEmDias;
   
     RETURN @ValorRealFinal;  
 END  
 GO
-
---Justificativa:
---Essa função centraliza o cálculo do valor real de um aluguel finalizado.
---Em vez de confiar em um valor pré-definido, ela recalcula o preço exato multiplicando a duração real do aluguel (em dias) pelo custo diário dos itens.
---Isso ajuda a evitar erros de faturamento, garantindo que o valor cobrado seja sempre preciso, mesmo que a data de devolução seja diferente da prevista.
---Além disso, serve como uma ferramenta de auditoria para verificar a consistência dos dados financeiros e simplifica a criação de relatórios precisos.

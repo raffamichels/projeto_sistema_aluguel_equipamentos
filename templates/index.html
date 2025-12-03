@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EquipRent - Sistema de Aluguel de Equipamentos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: #2563eb;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .logo-text h1 {
+            font-size: 24px;
+            color: #1f2937;
+        }
+
+        .logo-text p {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-link { 
+            text-decoration: none;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-link.primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .nav-link.primary:hover {
+            background: #1d4ed8;
+        }
+
+        .nav-link.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .nav-link.secondary:hover {
+            background: #d1d5db;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #1f2937;
+            font-weight: bold;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 45px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        .equipments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .equipment-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .equipment-card:hover {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+        }
+
+        .equipment-image {
+            background: linear-gradient(135deg, #e5e7eb, #f3f4f6);
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: #9ca3af;
+        }
+
+        .equipment-info {
+            padding: 15px;
+        }
+
+        .equipment-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .equipment-model {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .equipment-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .equipment-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .equipment-stock {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-badge.disponivel {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.indisponivel {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn-alugar {
+            width: 100%;
+            padding: 12px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-alugar:hover {
+            background: #1d4ed8;
+        }
+        
+        /* Carrinho e Modal Styles */
+        .carrinho-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .carrinho-icon {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation-name: animatetop;
+            animation-duration: 0.4s
+        }
+        
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close-btn:hover,
+        .close-btn:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .resumo-total {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .btn-finalizar {
+            background: #10b981;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+
+        @media (max-width: 768px) {
+            .equipments-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📦</div>
+                <div class="logo-text">
+                    <h1>EquipRent</h1>
+                    <p>Sistema de Aluguel de Equipamentos</p>
+                </div>
+            </div>
+            <div class="nav-buttons">
+                <a href="/consulta/equipamentos_disponiveis" class="nav-link secondary">📦 Catálogo</a>
+                <a href="/consulta/alugueis_ativos" class="nav-link secondary">📋 Aluguéis Ativos</a>
+                <a href="/operacao/finalizar" class="nav-link primary">✅ Finalizar Aluguel (SP)</a>
+                <a href="/operacao/manutencao" class="nav-link primary" style="background: #f59e0b; color: white;">🔧 Nova Manutenção (Trigger)</a>
+                
+                <!-- Novo Botão de Carrinho que abre a página local -->
+                <button class="nav-link primary" id="carrinhoBtn" onclick="mudarPagina('carrinho')" style="background: #4C51BF;">
+                    <span class="carrinho-icon">
+                        🛒 Carrinho
+                        <span class="carrinho-badge" id="carrinhoBadge" style="display: none;">0</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <!-- PÁGINA CATÁLOGO (Principal) -->
+        <div id="catalogo" class="page active">
+            <div class="section">
+                <div class="section-header">
+                    <h2 class="section-title">Catálogo de Equipamentos</h2>
+                    <a href="/consulta/equipamentos_disponiveis" class="nav-link secondary">Ver Estoque Real (Backend)</a>
+                </div>
+                
+                <p style="margin-bottom: 20px; color: #6b7280;">Selecione os IDs de Cliente/Funcionário e adicione itens abaixo. <br>
+                    *Dados dos itens são simulados para este Catálogo.</p>
+
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Buscar equipamentos (simulação)..." onkeyup="filtrarEquipamentos()">
+                </div>
+
+                <div class="equipments-grid" id="equipmentsGrid">
+                    <!-- Equipamentos de SIMULAÇÃO serão inseridos aqui pelo JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PÁGINA CARRINHO/CHECKOUT -->
+        <div id="carrinho" class="page" style="display: none;">
+            <div class="section" id="carrinhoContent">
+                <h2 class="section-title">Carrinho de Aluguel</h2>
+                <!-- Conteúdo do carrinho será inserido aqui pelo JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Finalização do Pedido (Dados do Cliente) -->
+    <div id="finalizarModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('finalizarModal').style.display='none'">&times;</span>
+            <h3 style="color: #2563eb; margin-bottom: 20px;">Detalhes do Aluguel</h3>
+            
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label for="modal_cliente_id">ID do Cliente (Ex: 1 a 20):</label>
+                    <input type="number" id="modal_cliente_id" required value="1">
+                </div>
+                <div class="form-group">
+                    <label for="modal_funcionario_id">ID do Funcionário (Ex: 1 a 15):</label>
+                    <input type="number" id="modal_funcionario_id" required value="1">
+                </div>
+                
+                <div class="resumo-total">
+                    <span>TOTAL (1 Dia)</span>
+                    <span id="modalTotal">R$ 0.00</span>
+                </div>
+
+                <button type="submit" class="btn-finalizar" id="btnConfirmarFinalizacao">Confirmar Aluguel</button>
+            </form>
+            <div id="modalMessage" style="margin-top: 15px; font-weight: bold;"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- VARIÁVEIS GLOBAIS DE ESTADO ---
+        let carrinho = [];
+        let currentPage = 'catalogo';
+        
+        // --- DADOS DE SIMULAÇÃO (IDs e Preços são reais do DML) ---
+        const equipamentos = [
+            { id: 16, nome: 'Mini Escavadeira', modelo: 'Bobcat E10', preco_diaria: 850.00, status: 'Disponível', categoria: 'Máquinas Pesadas', estoque: 6, icon: '🚜', quantidade: 1 },
+            { id: 1, nome: 'Furadeira de Impacto', modelo: 'Bosch GSB 550', preco_diaria: 25.50, status: 'Disponível', categoria: 'Ferramentas Elétricas', estoque: 8, icon: ' ड्रिल', quantidade: 1 },
+            { id: 127, nome: 'Nível a Laser Rotativo', modelo: 'Spectra Precision HV302', preco_diaria: 180.00, status: 'Disponível', categoria: 'Medição', estoque: 1, icon: '📐', quantidade: 1 },
+            { id: 115, nome: 'Andaime Tubular 1.0m', modelo: 'Tubex Padrão', preco_diaria: 15.00, status: 'Em Manutenção', categoria: 'Acesso', estoque: 0, icon: '🪜', quantidade: 1 },
+            { id: 139, nome: 'Torre de Iluminação Móvel', modelo: 'Atlas Copco HiLight', preco_diaria: 220.00, status: 'Em Uso', categoria: 'Iluminação', estoque: 1, icon: '💡', quantidade: 1 },
+            { id: 130, nome: 'Lavadora de Alta Pressão', modelo: 'Karcher HD 5/11 C', preco_diaria: 70.00, status: 'Disponível', categoria: 'Limpeza Industrial', estoque: 9, icon: '🚿', quantidade: 1 },
+            { id: 162, nome: 'Plataforma Elevatória Tesoura', modelo: 'Skyjack SJIII', preco_diaria: 600.00, status: 'Disponível', categoria: 'Acesso e Elevação', estoque: 4, icon: '⬆️', quantidade: 1 },
+            { id: 117, nome: 'Máquina de Solda Inversora', modelo: 'Esab Bantam 140i', preco_diaria: 95.00, status: 'Disponível', categoria: 'Serralheria e Solda', estoque: 8, icon: '🔥', quantidade: 1 },
+        ];
+
+
+        // --- FUNÇÕES DE NAVEGAÇÃO ---
+        function mudarPagina(pagina) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.getElementById(pagina).style.display = 'block';
+            currentPage = pagina;
+            if (pagina === 'carrinho') {
+                renderizarCarrinho();
+            }
+        }
+
+        // --- FUNÇÕES DE CATÁLOGO ---
+        function renderizarEquipamentos(lista = equipamentos) {
+            const grid = document.getElementById('equipmentsGrid');
+            grid.innerHTML = '';
+
+            lista.forEach(eq => {
+                const card = `
+                    <div class="equipment-card">
+                        <div class="equipment-image">${eq.icon || '🔧'}</div>
+                        <div class="equipment-info">
+                            <div class="equipment-name">${eq.nome} (ID: ${eq.id})</div>
+                            <div class="equipment-model">${eq.modelo} - ${eq.categoria}</div>
+                            <div class="equipment-price">R$ ${eq.preco_diaria.toFixed(2)} <span style="font-size: 12px; color: #6b7280;">/dia</span></div>
+                            <div class="equipment-details">
+                                <span class="equipment-stock">Estoque: ${eq.estoque}</span>
+                                <span class="status-badge ${eq.status === 'Disponível' ? 'disponivel' : 'indisponivel'}">${eq.status}</span>
+                            </div>
+                            <button class="btn-alugar" 
+                                onclick="adicionarAoCarrinho(${eq.id})" 
+                                ${eq.status !== 'Disponível' || eq.estoque < 1 ? 'disabled' : ''}
+                            >
+                                🛒 Adicionar ao Carrinho
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += card;
+            });
+        }
+
+        function filtrarEquipamentos() {
+            const busca = document.getElementById('searchInput').value.toLowerCase();
+            const filtrados = equipamentos.filter(eq => 
+                eq.nome.toLowerCase().includes(busca) ||
+                eq.modelo.toLowerCase().includes(busca) ||
+                eq.categoria.toLowerCase().includes(busca)
+            );
+            renderizarEquipamentos(filtrados);
+        }
+
+        // --- FUNÇÕES DE CARRINHO ---
+        function adicionarAoCarrinho(id) {
+            const itemOriginal = equipamentos.find(eq => eq.id === id);
+            
+            // Verifica se o item já está no carrinho
+            const itemCarrinho = carrinho.find(item => item.id === id);
+
+            if (itemCarrinho) {
+                 // Aumenta a quantidade se já estiver no carrinho
+                 if (itemCarrinho.quantidade < itemOriginal.estoque) {
+                    itemCarrinho.quantidade++;
+                 } else {
+                    alert(`Estoque máximo de ${itemOriginal.nome} atingido.`);
+                    return;
+                 }
+            } else {
+                // Adiciona o item (clonando-o para não modificar o original)
+                carrinho.push({ ...itemOriginal, quantidade: 1 });
+            }
+            
+            atualizarBadgeCarrinho();
+            if (currentPage === 'carrinho') {
+                renderizarCarrinho();
+            } else {
+                 alert(`${itemOriginal.nome} adicionado ao carrinho!`);
+            }
+        }
+
+        function removerDoCarrinho(id) {
+            const index = carrinho.findIndex(item => item.id === id);
+            if (index > -1) {
+                const item = carrinho[index];
+                if (item.quantidade > 1) {
+                    item.quantidade--;
+                } else {
+                    carrinho.splice(index, 1);
+                }
+            }
+            atualizarBadgeCarrinho();
+            renderizarCarrinho();
+        }
+        
+        function atualizarBadgeCarrinho() {
+            const totalItens = carrinho.reduce((sum, item) => sum + item.quantidade, 0);
+            const badge = document.getElementById('carrinhoBadge');
+            if (totalItens > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = totalItens;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        function calcularTotal() {
+            return carrinho.reduce((sum, item) => sum + (item.preco_diaria * item.quantidade), 0);
+        }
+
+        function renderizarCarrinho() {
+            const content = document.getElementById('carrinhoContent');
+            const total = calcularTotal();
+
+            if (carrinho.length === 0) {
+                content.innerHTML = `
+                    <h2 class="section-title">Carrinho de Aluguel</h2>
+                    <div style="text-align: center; padding: 50px; color: #6b7280;">
+                        <span style="font-size: 50px;">🛒</span>
+                        <p style="margin-top: 10px;">Seu carrinho está vazio.</p>
+                        <a href="#" onclick="mudarPagina('catalogo')" class="nav-link primary" style="margin-top: 20px;">Explorar Equipamentos</a>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<h2 class="section-title">Itens Selecionados</h2>';
+            
+            carrinho.forEach(item => {
+                const subtotal = item.preco_diaria * item.quantidade;
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span style="font-size: 24px;">${item.icon || '🔧'}</span>
+                            <div>
+                                <div style="font-weight: bold;">${item.nome} (ID: ${item.id})</div>
+                                <div style="font-size: 12px; color: #6b7280;">${item.modelo}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 16px;">R$ ${item.preco_diaria.toFixed(2)} x ${item.quantidade}</div>
+                            <div style="font-weight: bold;">Subtotal: R$ ${subtotal.toFixed(2)}</div>
+                            <button onclick="removerDoCarrinho(${item.id})" style="background: #ef4444; color: white; border: none; border-radius: 4px; padding: 5px 10px; margin-top: 5px; cursor: pointer;">
+                                Remover 1
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `<button class="btn-finalizar" onclick="abrirModalCheckout()" style="margin-top: 20px;">
+                        Finalizar Pedido (Total: R$ ${total.toFixed(2)})
+                     </button>`;
+
+            content.innerHTML = html;
+        }
+        
+        // --- FUNÇÕES DE CHECKOUT/BACKEND ---
+        function abrirModalCheckout() {
+            const modal = document.getElementById('finalizarModal');
+            document.getElementById('modalTotal').textContent = `R$ ${calcularTotal().toFixed(2)}`;
+            document.getElementById('modalMessage').textContent = '';
+            modal.style.display = 'block';
+        }
+
+        document.getElementById('checkoutForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const clienteId = parseInt(document.getElementById('modal_cliente_id').value);
+            const funcionarioId = parseInt(document.getElementById('modal_funcionario_id').value);
+            const modalMessageDiv = document.getElementById('modalMessage');
+
+            if (carrinho.length === 0) {
+                modalMessageDiv.textContent = 'Erro: O carrinho está vazio.';
+                return;
+            }
+
+            modalMessageDiv.textContent = 'Processando...';
+            
+            // Mapeia o carrinho para o formato esperado pelo backend
+            const itensParaBackend = carrinho.map(item => ({
+                id: item.id, // equipamento_id
+                quantidade: item.quantidade,
+                preco_diaria: item.preco_diaria
+            }));
+
+            const dataToSend = {
+                cliente_id: clienteId,
+                funcionario_id: funcionarioId,
+                itens: itensParaBackend
+            };
+            
+            // Envia a requisição para a nova rota de aluguel
+            fetch('/api/realizar_aluguel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    modalMessageDiv.style.color = '#10b981';
+                    modalMessageDiv.innerHTML = `✅ ${data.message}`;
+                    
+                    // Limpa o carrinho e atualiza o frontend
+                    carrinho = [];
+                    atualizarBadgeCarrinho();
+                    
+                    // Fecha o modal após 3 segundos
+                    setTimeout(() => {
+                        document.getElementById('finalizarModal').style.display='none';
+                        mudarPagina('catalogo');
+                    }, 3000);
+                    
+                } else {
+                    modalMessageDiv.style.color = '#ef4444';
+                    modalMessageDiv.innerHTML = `❌ Erro: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                modalMessageDiv.style.color = '#ef4444';
+                modalMessageDiv.innerHTML = `❌ Erro de Conexão: ${error}`;
+            });
+        });
+
+        // Inicializar a renderização
+        renderizarEquipamentos();
+        atualizarBadgeCarrinho();
+        
+        // Configura fechar o modal clicando fora dele
+        window.onclick = function(event) {
+            const modal = document.getElementById('finalizarModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

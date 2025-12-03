@@ -1,0 +1,7 @@
+Ordem de execução dos scripts:
+
+DDL_CreateTables.sql (cria tabelas e dados)
+Objetos_Trigger_Indices.sql (trigger)
+Objetos_SP_Function.sql (stored procedure)
+Objetos_Function_Indices.sql (function)
+DDL_indexes.sql (índices)

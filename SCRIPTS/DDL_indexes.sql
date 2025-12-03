@@ -1,9 +1,6 @@
--- Projeto: Sistema de Aluguel de Equipamentos
--- SCRIPT DE OTIMIZAÇÃO (ISSUE #26)
--- Autor: Pessoa F
--- Descrição: Criação de Índices Non-Clustered para performance
--- Justificativa: Otimização de SARGs (Argumentos de Busca) e Joins
--- 
+-- #################################################
+-- ### SCRIPT DE CRIAÇÃO DE ÍNDICES NON-CLUSTERED
+-- #################################################
 
 -- 1. Otimização de CLIENTES (Busca por endereço e nome)
 CREATE NONCLUSTERED INDEX IX_CLIENTES_ENDERECO ON CLIENTES (endereco_id);

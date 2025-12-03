@@ -1,24 +1,9 @@
---Comando DDL Sistema de Aluguel de Equipamentos
+-- #################################################
+-- ### REVISÃO DDL - SISTEMA DE ALUGUEL DE EQUIPAMENTOS
+-- ### REORDENAMENTO E CONSISTÊNCIA DE TIPOS DE DADOS
+-- #################################################
 
--- Tabela 1: CLIENTES
-CREATE TABLE CLIENTES(
-	cliente_id INT IDENTITY(1,1) NOT NULL, 
-	Nome VARCHAR(100) NOT NULL, 
-	CPF_CNPJ VARCHAR(18) NOT NULL, 
-	email VARCHAR(100) NOT NULL, 
-	telefone VARCHAR(15) NOT NULL, 
-	endereco_id INT NOT NULL,
-	CONSTRAINT PK_CLIENTES PRIMARY KEY (cliente_id));
-
--- Tabela 2: FUNCIONARIOS
-CREATE TABLE FUNCIONARIOS(
-	funcionario_id INT IDENTITY(1,1) NOT NULL, 
-	nome VARCHAR(100) NOT NULL, 
-	cargo VARCHAR(50) NOT NULL, 
-	dt_contratacao DATE NOT NULL, 
-	CONSTRAINT PK_FUNCIONARIOS PRIMARY KEY (funcionario_id),
-	-- CONSTRAINT CHECK para data de contratação (Regra de Negócio)
-	CONSTRAINT CK_FUNC_CONTRATACAO CHECK (dt_contratacao <= GETDATE()));
+-- TABELAS INDEPENDENTES PRIMEIRO (Sem Foreign Keys)
 
 -- Tabela 3: ENDERECO
 CREATE TABLE ENDERECO(
@@ -29,7 +14,7 @@ CREATE TABLE ENDERECO(
 	complemento VARCHAR(15) NULL, 
 	cidade VARCHAR(50) NOT NULL,
 	estado CHAR(2) NOT NULL,
-	cep VARCHAR(8) NOT NULL,
+	cep VARCHAR(9) NOT NULL, -- Revisado para suportar o formato '99999-999'
 	CONSTRAINT PK_ENDERECO PRIMARY KEY (endereco_id));
 
 -- Tabela 4: CATEGORIA
@@ -37,9 +22,45 @@ CREATE TABLE CATEGORIA(
 	categoria_id INT IDENTITY(1,1) NOT NULL, 
 	nome_categoria VARCHAR(50) NOT NULL, 
 	descricao VARCHAR(255) NOT NULL, 
-	CONSTRAINT PK_CATEGORIA PRIMARY KEY (categoria_id));
+	CONSTRAINT PK_CATEGORIA PRIMARY KEY (categoria_id),
+	CONSTRAINT UK_CATEGORIA_NOME UNIQUE (nome_categoria));
 
--- Tabela 5: EQUIPAMENTO
+-- Tabela 12: FORNECEDORES
+CREATE TABLE FORNECEDORES (
+	fornecedor_id INT IDENTITY(1,1) NOT NULL, 
+	nome VARCHAR(100) NOT NULL,  
+	cnpj VARCHAR(18) NOT NULL, -- Alterado para VARCHAR para consistência com CLIENTES.
+	telefone VARCHAR(15) NOT NULL, 
+	CONSTRAINT PK_FORNECEDORES PRIMARY KEY (fornecedor_id),
+	CONSTRAINT UK_FORNECEDORES_CNPJ UNIQUE (cnpj));
+
+
+-- TABELAS COM FOREIGN KEYS DE TABELAS JÁ CRIADAS
+
+-- Tabela 1: CLIENTES (Depende de ENDERECO)
+CREATE TABLE CLIENTES(
+	cliente_id INT IDENTITY(1,1) NOT NULL, 
+	Nome VARCHAR(100) NOT NULL, 
+	CPF_CNPJ VARCHAR(18) NOT NULL, 
+	email VARCHAR(100) NOT NULL, 
+	telefone VARCHAR(15) NOT NULL, 
+	endereco_id INT NOT NULL,
+	CONSTRAINT PK_CLIENTES PRIMARY KEY (cliente_id),
+	CONSTRAINT UK_CLIENTE_CPF UNIQUE (CPF_CNPJ),
+	CONSTRAINT UK_CLIENTE_EMAIL UNIQUE (email),
+	CONSTRAINT FK_CLIENTE_ENDERECO FOREIGN KEY (endereco_id)
+	REFERENCES ENDERECO (endereco_id));
+
+-- Tabela 2: FUNCIONARIOS (Independente, mas inserida aqui para organização)
+CREATE TABLE FUNCIONARIOS(
+	funcionario_id INT IDENTITY(1,1) NOT NULL, 
+	nome VARCHAR(100) NOT NULL, 
+	cargo VARCHAR(50) NOT NULL, 
+	dt_contratacao DATE NOT NULL, -- Padronizado para DATE
+	CONSTRAINT PK_FUNCIONARIOS PRIMARY KEY (funcionario_id),
+	CONSTRAINT CK_FUNC_CONTRATACAO CHECK (dt_contratacao <= GETDATE()));
+
+-- Tabela 5: EQUIPAMENTO (Depende de CATEGORIA)
 CREATE TABLE EQUIPAMENTO(
 	equipamento_id INT IDENTITY(1,1) NOT NULL, 
 	nome VARCHAR(100) NOT NULL, 
@@ -47,187 +68,117 @@ CREATE TABLE EQUIPAMENTO(
 	numero_serie VARCHAR(50) NOT NULL,
 	preco_diaria DECIMAL(10,2) NOT NULL,
 	status VARCHAR(20) NOT NULL, 
-	CONSTRAINT PK_EQUIPAMENTO PRIMARY KEY (equipamento_id));
-	
--- Adicionando categoria_id na tabela de EQUIPAMENTO
-	ALTER TABLE EQUIPAMENTO
-	ADD categoria_id INT NOT NULL;
+	categoria_id INT NOT NULL, -- Coluna incluída diretamente na criação
+	CONSTRAINT PK_EQUIPAMENTO PRIMARY KEY (equipamento_id),
+	CONSTRAINT UK_EQUIPAMENTO_NUMSERIE UNIQUE (numero_serie),
+	CONSTRAINT FK_EQUIPAMENTO_CATEGORIA FOREIGN KEY (categoria_id)
+	REFERENCES CATEGORIA (categoria_id));
 
--- Tabela 6: ESTOQUE
+-- Tabela 6: ESTOQUE (Depende de EQUIPAMENTO)
 CREATE TABLE ESTOQUE(
 	estoque_id INT IDENTITY(1,1) NOT NULL, 
 	equipamento_id INT NOT NULL, 
 	quant_disponivel SMALLINT NOT NULL,
 	quant_total SMALLINT NOT NULL,
-	data_revisao DATETIME NOT NULL
+	data_revisao DATE NOT NULL, -- Padronizado para DATE
 	CONSTRAINT PK_ESTOQUE PRIMARY KEY (estoque_id),
-	-- CONSTRAINT CHECK para integridade de estoque
-	CONSTRAINT CK_ESTOQUE_DISP CHECK (quant_disponivel <= quant_total));
+	CONSTRAINT CK_ESTOQUE_DISP CHECK (quant_disponivel <= quant_total),
+	CONSTRAINT FK_ESTOQUE_EQUIPAMENTO FOREIGN KEY (equipamento_id)
+	REFERENCES EQUIPAMENTO (equipamento_id));
 
--- Tabela 7: ALUGUEL
+-- Tabela 7: ALUGUEL (Depende de CLIENTES e FUNCIONARIOS)
 CREATE TABLE ALUGUEL(
 	aluguel_id INT IDENTITY(1,1) NOT NULL, 
 	cliente_id INT NOT NULL, 
 	funcionario_id INT NOT NULL,
-	data_inicio DATETIME NOT NULL,
-	data_devolucao DATETIME NULL, -- Null, pois a devolução pode estar pendente
+	data_inicio DATE NOT NULL, -- Padronizado para DATE
+	data_devolucao DATE NULL, -- Padronizado para DATE
 	valor_total DECIMAL(10,2) NOT NULL, 
-	CONSTRAINT PK_ALUGUEL PRIMARY KEY (aluguel_id));
+	CONSTRAINT PK_ALUGUEL PRIMARY KEY (aluguel_id),
+	CONSTRAINT FK_ALUGUEL_CLIENTE FOREIGN KEY (cliente_id)
+	REFERENCES CLIENTES (cliente_id),
+	CONSTRAINT FK_ALUGUEL_FUNCIONARIO FOREIGN KEY (funcionario_id)
+	REFERENCES FUNCIONARIOS (funcionario_id));
 
--- Tabela 8: ALUGUEL_ITEM (Relacionamento N:N)
+-- Tabela 10: MANUTENCAO (Depende de EQUIPAMENTO e FORNECEDORES)
+CREATE TABLE MANUTENCAO(
+	manutencao_id INT IDENTITY(1,1) NOT NULL, 
+	equipamento_id INT NOT NULL, 
+	fornecedor_id INT NOT NULL,  
+	dt_inicio DATE NOT NULL, -- Padronizado para DATE
+	dt_final DATE NULL, -- Padronizado para DATE
+	custo DECIMAL(10,2) NOT NULL, 
+	descricao VARCHAR(255) NOT NULL, 
+	CONSTRAINT PK_MANUTENCAO PRIMARY KEY (manutencao_id),
+	CONSTRAINT FK_MANUTENCAO_EQUIP FOREIGN KEY (equipamento_id)
+	REFERENCES EQUIPAMENTO (equipamento_id),
+	CONSTRAINT FK_MANUTENCAO_FORN FOREIGN KEY (fornecedor_id)
+	REFERENCES FORNECEDORES (fornecedor_id));
+
+-- Tabela 8: ALUGUEL_ITEM (Depende de ALUGUEL e EQUIPAMENTO - Relacionamento N:N)
 CREATE TABLE ALUGUEL_ITEM(
-	aluguel_id INT  NOT NULL, 
+	aluguel_id INT NOT NULL, 
 	equipamento_id INT NOT NULL, 
 	quantidade SMALLINT NOT NULL,
 	valor_diaria DECIMAL(10,2) NOT NULL, 
-	CONSTRAINT PK_ALUGUEL_ITEM PRIMARY KEY (aluguel_id, equipamento_id)); --Chave Primária Composta
+	CONSTRAINT PK_ALUGUEL_ITEM PRIMARY KEY (aluguel_id, equipamento_id),
+	CONSTRAINT FK_ALUGUELITEM_ALUGUEL FOREIGN KEY (aluguel_id)
+	REFERENCES ALUGUEL (aluguel_id),
+	CONSTRAINT FK_ALUGUELITEM_EQUIPAMENTO FOREIGN KEY (equipamento_id)
+	REFERENCES EQUIPAMENTO (equipamento_id));
 
--- Tabela 9: PAGAMENTOS
+-- Tabela 9: PAGAMENTOS (Depende de ALUGUEL)
 CREATE TABLE PAGAMENTOS(
-	pagamento_id INT IDENTITY(1,1)  NOT NULL, 
+	pagamento_id INT IDENTITY(1,1) NOT NULL, 
 	aluguel_id INT NOT NULL, 
 	valor_pago DECIMAL(10,2) NOT NULL,
 	metodo_pagamento VARCHAR(50) NOT NULL, 
-	dt_pagamento DATETIME NOT NULL, 
-	CONSTRAINT PK_PAGAMENTOS PRIMARY KEY (pagamento_id));
+	dt_pagamento DATETIME2 NOT NULL, -- Padronizado para DATETIME2 para registro preciso
+	CONSTRAINT PK_PAGAMENTOS PRIMARY KEY (pagamento_id),
+	CONSTRAINT FK_PAGAMENTOS_ALUGUEL FOREIGN KEY (aluguel_id)
+	REFERENCES ALUGUEL (aluguel_id));
 
--- Tabela 10: MANUTENCAO
-CREATE TABLE MANUTENCAO(
-	manutencao_id INT IDENTITY(1,1)  NOT NULL, 
-	equipamento_id INT NOT NULL, 
-	fornecedor_id INT NOT NULL,  
-	dt_inicio DATETIME NOT NULL, 
-	dt_final DATETIME NULL, -- Null, pois a manutenção pode estar em andamento
-	custo DECIMAL(10,2) NOT NULL, 
-	descricao VARCHAR(255) NOT NULL, 
-	CONSTRAINT PK_MANUTENCAO PRIMARY KEY (manutencao_id));
-
--- Tabela 11: MULTAS
+-- Tabela 11: MULTAS (Depende de ALUGUEL)
 CREATE TABLE MULTAS(
-	multa_id INT IDENTITY(1,1)  NOT NULL, 
+	multa_id INT IDENTITY(1,1) NOT NULL, 
 	aluguel_id INT NOT NULL, 
 	valor_multa DECIMAL(10,2) NOT NULL,  
 	descricao VARCHAR(255) NOT NULL, 
-	dt_multa DATETIME NOT NULL,
+	dt_multa DATETIME2 NOT NULL, -- Padronizado para DATETIME2 para registro preciso
 	status_pagamento VARCHAR(20) NOT NULL, 
-	CONSTRAINT PK_MULTAS PRIMARY KEY (multa_id));
+	CONSTRAINT PK_MULTAS PRIMARY KEY (multa_id),
+	CONSTRAINT FK_MULTAS_ALUGUEL FOREIGN KEY (aluguel_id)
+	REFERENCES ALUGUEL (aluguel_id));
 
--- Tabela 12: FORNECEDORES
-CREATE TABLE FORNECEDORES (
-	fornecedor_id INT IDENTITY(1,1)  NOT NULL, 
-	nome VARCHAR(100) NOT NULL,  
-	cnpj CHAR(18) NOT NULL, 
-	telefone VARCHAR(15) NOT NULL, 
-	CONSTRAINT PK_FORNECEDORES PRIMARY KEY (fornecedor_id));
 
--- REGRAS DE UNIDADE (UNIQUE)
+-- #################################################
+-- ### REVISÃO DML - INSERÇÃO DE DADOS
+-- ### AJUSTES NOS FORMATOS DE DATA/HORA E CEP
+-- #################################################
 
-ALTER TABLE CLIENTES
-ADD CONSTRAINT UK_CLIENTE_CPF UNIQUE (CPF_CNPJ);
-ALTER TABLE CLIENTES 
-ADD CONSTRAINT UK_CLIENTE_EMAIL	UNIQUE (email);
-
-ALTER TABLE CATEGORIA
-ADD CONSTRAINT UK_CATEGORIA_NOME UNIQUE (nome_categoria);
-
-ALTER TABLE EQUIPAMENTO
-ADD CONSTRAINT UK_EQUIPAMENTO_NUMSERIE UNIQUE (numero_serie);
-
-ALTER TABLE FORNECEDORES
-ADD CONSTRAINT UK_FORNECEDORES_CNPJ	UNIQUE (cnpj);
-
--- CHAVES ESTRANGEIRAS (FOREIGN KEYS)
-
--- CLIENTES
-ALTER TABLE CLIENTES
-ADD CONSTRAINT FK_CLIENTE_ENDERECO FOREIGN KEY (endereco_id)
-REFERENCES ENDERECO (endereco_id);
-
--- EQUIPAMENTO
-ALTER TABLE EQUIPAMENTO
-ADD CONSTRAINT FK_EQUIPAMENTO_CATEGORIA	FOREIGN KEY (categoria_id)
-REFERENCES CATEGORIA (categoria_id);
-
--- ESTOQUE
-ALTER TABLE ESTOQUE
-ADD CONSTRAINT FK_ESTOQUE_EQUIPAMENTO FOREIGN KEY (equipamento_id)
-REFERENCES EQUIPAMENTO (equipamento_id);
-ALTER TABLE ESTOQUE
-ALTER COLUMN data_revisao DATE NOT NULL;
-
--- ALUGUEL
-ALTER TABLE ALUGUEL
-ADD CONSTRAINT FK_ALUGUEL_CLIENTE FOREIGN KEY (cliente_id)
-REFERENCES CLIENTES (cliente_id);
-ALTER TABLE ALUGUEL
-ADD CONSTRAINT FK_ALUGUEL_FUNCIONARIO FOREIGN KEY (funcionario_id)
-REFERENCES FUNCIONARIOS (funcionario_id);
-ALTER TABLE ALUGUEL
-ALTER COLUMN data_inicio DATE NOT NULL;
-ALTER TABLE ALUGUEL
-ALTER COLUMN data_devolucao DATE NULL;
-
--- ALUGUEL_ITEM
-ALTER TABLE ALUGUEL_ITEM
-ADD CONSTRAINT FK_ALUGUELITEM_ALUGUEL FOREIGN KEY (aluguel_id)
-REFERENCES ALUGUEL (aluguel_id);
-ALTER TABLE ALUGUEL_ITEM
-ADD CONSTRAINT FK_ALUGUELITEM_EQUIPAMENTO FOREIGN KEY (equipamento_id)
-REFERENCES EQUIPAMENTO (equipamento_id);
-
--- PAGAMENTOS
-ALTER TABLE PAGAMENTOS 
-ADD CONSTRAINT FK_PAGAMENTOS_ALUGUEL FOREIGN KEY (aluguel_id)
-REFERENCES ALUGUEL (aluguel_id);
-ALTER TABLE PAGAMENTOS
-ALTER COLUMN dt_pagamento DATETIME2 NOT NULL;
-
--- MANUTENCAO
-ALTER TABLE MANUTENCAO
-ADD CONSTRAINT FK_MANUTENCAO_EQUIP FOREIGN KEY (equipamento_id)
-REFERENCES EQUIPAMENTO (equipamento_id);
-ALTER TABLE MANUTENCAO
-ADD CONSTRAINT FK_MANUTENCAO_FORN	FOREIGN KEY (fornecedor_id)
-REFERENCES FORNECEDORES (fornecedor_id);
-ALTER TABLE MANUTENCAO
-ALTER COLUMN dt_inicio DATE NOT NULL;
-ALTER TABLE MANUTENCAO
-ALTER COLUMN dt_final DATE NULL;
-
--- MULTAS
-ALTER TABLE MULTAS
-ADD CONSTRAINT FK_MULTAS_ALUGUEL FOREIGN KEY (aluguel_id)
-REFERENCES ALUGUEL (aluguel_id);
-ALTER TABLE MULTAS
-ALTER COLUMN dt_multa DATETIME2 NOT NULL;
-
--- Comando DML Sistema de Aluguel de Equipamentos
-
--- Tabela 3: Endereco
+-- Tabela 3: Endereco (AJUSTE DE CEP PARA FORMATO COM HÍFEN)
 
 INSERT INTO ENDERECO (logradouro, bairro, numero, complemento, cidade, estado, cep) VALUES
-( 'Rua das Flores', 'Jardim América', '150', 'Apto 101', 'São Paulo', 'SP', '04001001'),
-( 'Av. Atlântica', 'Copacabana', '3000', 'Bloco B', 'Rio de Janeiro', 'RJ', '22070002'),
-( 'Rua do Comércio', 'Centro', '125', NULL, 'Curitiba', 'PR', '80010010'),
-( 'Estrada Real', 'Alphaville', '80', 'Casa 2', 'Belo Horizonte', 'MG', '30110005'),
-( 'Av. Paulista', 'Bela Vista', '1009', 'Sala 5', 'São Paulo', 'SP', '01310100'),
-( 'Rua XV de Novembro', 'Centro', '45', NULL, 'Curitiba', 'PR', '80020020'),
-( 'Rua da Paz', 'Funcionários', '550', 'Sala 1', 'Belo Horizonte', 'MG', '30130025'),
-( 'Av. Sete de Setembro', 'Ondina', '100', 'Apto 303', 'Salvador', 'BA', '40170010'),
-( 'Rua das Indústrias', 'Distrito Industrial', '100', NULL, 'São Bernardo do Campo', 'SP', '09842000'),
-( 'Av. dos Estados', 'Vila Nova', '500', 'Galpão 3', 'Porto Alegre', 'RS', '90110150'),
-( 'Rua do Progresso', 'Centro Empresarial', '20', 'Torre Sul', 'Recife', 'PE', '50030010'),
-( 'Av. Engenharia', 'Jardim Botânico', '15', NULL, 'Curitiba', 'PR', '80210050'),
-( 'Rua dos Construtores', 'Industrial', '90', NULL, 'São Paulo', 'SP', '04710000'),
-( 'Rua do Evento', 'Centro', '155', 'Loja B', 'Rio de Janeiro', 'RJ', '20040040'),
-( 'Rua da Tecnologia', 'Santo Amaro', '1000', 'Andar 10', 'Recife', 'PE', '50030020'),
-( 'Rua do Sol Nascente', 'Praia Grande', '10', 'Quiosque', 'Fortaleza', 'CE', '60165005'),
-( 'Av. Principal', 'Setor Central', '200', NULL, 'Brasília', 'DF', '70040000');
+( 'Rua das Flores', 'Jardim América', '150', 'Apto 101', 'São Paulo', 'SP', '04001-001'), -- Corrigido
+( 'Av. Atlântica', 'Copacabana', '3000', 'Bloco B', 'Rio de Janeiro', 'RJ', '22070-002'), -- Corrigido
+( 'Rua do Comércio', 'Centro', '125', NULL, 'Curitiba', 'PR', '80010-010'), -- Corrigido
+( 'Estrada Real', 'Alphaville', '80', 'Casa 2', 'Belo Horizonte', 'MG', '30110-005'), -- Corrigido
+( 'Av. Paulista', 'Bela Vista', '1009', 'Sala 5', 'São Paulo', 'SP', '01310-100'), -- Corrigido
+( 'Rua XV de Novembro', 'Centro', '45', NULL, 'Curitiba', 'PR', '80020-020'), -- Corrigido
+( 'Rua da Paz', 'Funcionários', '550', 'Sala 1', 'Belo Horizonte', 'MG', '30130-025'), -- Corrigido
+( 'Av. Sete de Setembro', 'Ondina', '100', 'Apto 303', 'Salvador', 'BA', '40170-010'), -- Corrigido
+( 'Rua das Indústrias', 'Distrito Industrial', '100', NULL, 'São Bernardo do Campo', 'SP', '09842-000'), -- Corrigido
+( 'Av. dos Estados', 'Vila Nova', '500', 'Galpão 3', 'Porto Alegre', 'RS', '90110-150'), -- Corrigido
+( 'Rua do Progresso', 'Centro Empresarial', '20', 'Torre Sul', 'Recife', 'PE', '50030-010'), -- Corrigido
+( 'Av. Engenharia', 'Jardim Botânico', '15', NULL, 'Curitiba', 'PR', '80210-050'), -- Corrigido
+( 'Rua dos Construtores', 'Industrial', '90', NULL, 'São Paulo', 'SP', '04710-000'), -- Corrigido
+( 'Rua do Evento', 'Centro', '155', 'Loja B', 'Rio de Janeiro', 'RJ', '20040-040'), -- Corrigido
+( 'Rua da Tecnologia', 'Santo Amaro', '1000', 'Andar 10', 'Recife', 'PE', '50030-020'), -- Corrigido
+( 'Rua do Sol Nascente', 'Praia Grande', '10', 'Quiosque', 'Fortaleza', 'CE', '60165-005'), -- Corrigido
+( 'Av. Principal', 'Setor Central', '200', NULL, 'Brasília', 'DF', '70040-000'); -- Corrigido
 
 -- Tabela 1: Clientes 
-
 INSERT INTO CLIENTES (Nome, CPF_CNPJ, email, telefone, endereco_id) VALUES
-
 ('Joao da Silva', '487.654.321-09', 'joao.silva@exemplo.com', '11988887777', 1),
 ('Maria Souza', '359.876.543-21', 'maria.souza@empresa.com.br', '21977776666', 2),
 ('Pedro Henrique', '789.012.345-67', 'pedro.henrique@home.net', '41955554444', 3),
@@ -250,7 +201,6 @@ INSERT INTO CLIENTES (Nome, CPF_CNPJ, email, telefone, endereco_id) VALUES
 ('Manutenção Essencial', '23.456.789/0001-44', 'essencial@manut.com', '81911118888', 15);
 
 -- Tabela 2: Funcionarios
-
 INSERT INTO FUNCIONARIOS (nome, cargo, dt_contratacao) VALUES
 ('Felipe Mendes', 'Gerente de Filial', '2022-01-15'),
 ('Sofia Oliveira', 'Vendedor Sênior', '2023-03-01'),
@@ -269,7 +219,6 @@ INSERT INTO FUNCIONARIOS (nome, cargo, dt_contratacao) VALUES
 ('Otávio Martins', 'Assistente de Vendas', '2024-01-20');
 
 -- Tabela 4: Categoria
-
 INSERT INTO CATEGORIA (nome_categoria, descricao) VALUES
 ('Ferramentas Elétricas', 'Equipamentos portáteis para corte, perfuração e desbaste.'),
 ('Máquinas Pesadas', 'Equipamentos de grande porte para terraplanagem e elevação.'),
@@ -288,7 +237,6 @@ INSERT INTO CATEGORIA (nome_categoria, descricao) VALUES
 ('Ferramentas Manuais', 'Kits e peças avulsas de ferramentas não elétricas.');
 
 -- Tabela 12: Fornecedores
-
 INSERT INTO FORNECEDORES (nome, cnpj, telefone) VALUES
 ('Manutenção Diesel e Hidráulica MG', '01.234.567/0001-89', '3135001234'),
 ('Peças e Componentes Elétricos Sul', '12.345.678/0001-90', '4733005678'),
@@ -312,7 +260,6 @@ INSERT INTO FORNECEDORES (nome, cnpj, telefone) VALUES
 ('Assistência Técnica Autorizada Bosch', '91.234.567/0001-00', '1140005555');
 
 -- Tabela 5: Equipamento
-
 INSERT INTO EQUIPAMENTO (nome, modelo, numero_serie, preco_diaria, status, categoria_id) VALUES
 ('Furadeira de Impacto', 'Bosch GSB 550', 'BR550A001', 25.50, 'Em Uso', 1),
 ('Furadeira de Impacto', 'Bosch GSB 550', 'BR550A002', 25.50, 'Em Manutenção', 1),
@@ -481,138 +428,132 @@ INSERT INTO EQUIPAMENTO (nome, modelo, numero_serie, preco_diaria, status, categ
 ('Plataforma Elevatória Tesoura', 'Skyjack SJIII', 'SJ3165', 600.00, 'Disponível', 10),
 ('Plataforma Elevatória Tesoura', 'Skyjack SJIII', 'SJ3166', 600.00, 'Disponível', 10);
 
--- Tabela 6: Estoque
-
+-- Tabela 6: Estoque (DATAS AJUSTADAS PARA DATE)
 INSERT INTO ESTOQUE (equipamento_id, quant_disponivel, quant_total, data_revisao) VALUES
-(1, 8, 12, '2025-11-01 00:00:00'), 
-(2, 0, 3, '2025-10-25 00:00:00'),
-(3, 6, 12, '2025-11-15 00:00:00'),
-(4, 2, 15, '2025-10-05 00:00:00'),
-(5, 5, 8, '2025-11-20 00:00:00'),
-(6, 13, 16, '2025-10-18 00:00:00'), 
-(7, 4, 6, '2025-11-25 00:00:00'),
-(8, 2, 10, '2025-10-01 00:00:00'),
-(9, 4, 5, '2025-11-05 00:00:00'),
-(10, 14, 18, '2025-10-22 00:00:00'),
-(11, 4, 9, '2025-11-12 00:00:00'),
-(12, 0, 2, '2025-10-08 00:00:00'),
-(13, 8, 10, '2025-11-28 00:00:00'),
-(14, 1, 2, '2025-10-14 00:00:00'),
-(15, 9, 10, '2025-11-07 00:00:00'),
-(16, 1, 2, '2025-10-29 00:00:00'),
-(17, 12, 15, '2025-11-18 00:00:00'),
-(18, 4, 5, '2025-11-03 00:00:00'),
-(19, 1, 1, '2025-11-09 00:00:00'),
-(20, 4, 5, '2025-11-10 00:00:00');
+(1, 8, 12, '2025-11-01'), 
+(2, 0, 3, '2025-10-25'),
+(3, 6, 12, '2025-11-15'),
+(4, 2, 15, '2025-10-05'),
+(5, 5, 8, '2025-11-20'),
+(6, 13, 16, '2025-10-18'), 
+(7, 4, 6, '2025-11-25'),
+(8, 2, 10, '2025-10-01'),
+(9, 4, 5, '2025-11-05'),
+(10, 14, 18, '2025-10-22'),
+(11, 4, 9, '2025-11-12'),
+(12, 0, 2, '2025-10-08'),
+(13, 8, 10, '2025-11-28'),
+(14, 1, 2, '2025-10-14'),
+(15, 9, 10, '2025-11-07'),
+(16, 1, 2, '2025-10-29'),
+(17, 12, 15, '2025-11-18'),
+(18, 4, 5, '2025-11-03'),
+(19, 1, 1, '2025-11-09'),
+(20, 4, 5, '2025-11-10');
 
--- Tabela 10: Manutenção
-
+-- Tabela 10: Manutenção (DATAS AJUSTADAS PARA DATE)
 INSERT INTO MANUTENCAO (equipamento_id, fornecedor_id, dt_inicio, dt_final, custo, descricao) VALUES
-(2, 20, '2025-10-15 08:00:00', '2025-10-20 17:30:00', 85.50, 'Troca de escovas e lubrificação preventiva.'),
-(3, 20, '2025-11-01 10:30:00', '2025-11-05 14:00:00', 95.00, 'Conserto do motor e substituição do cabo de energia.'),
-(4, 20, '2025-11-20 15:00:00', NULL, 120.00, 'Revisão completa e calibração de torque. Em andamento.'),
-(14, 1, '2025-10-25 09:00:00', '2025-10-28 16:00:00', 180.50, 'Troca da base de lixamento e verificação do motor.'),
-(15, 1, '2025-11-18 08:30:00', NULL, 210.00, 'Reparo na excentricidade. Aguardando peça de reposição.'),
-(18, 4, '2025-10-05 14:00:00', '2025-10-15 11:00:00', 3500.00, 'Manutenção do sistema hidráulico e troca de filtros.'),
-(19, 4, '2025-11-08 07:00:00', '2025-11-20 12:00:00', 4100.00, 'Reparo estrutural na lança e pintura protetora.'),
-(20, 4, '2025-11-25 10:00:00', NULL, 850.00, 'Diagnóstico eletrônico de falhas. Em análise.'),
-(21, 4, '2025-11-27 15:00:00', NULL, 6500.00, 'Revisão completa do motor (1000h).'),
-(31, 19, '2025-10-10 11:00:00', '2025-10-14 17:00:00', 750.00, 'Substituição de correias e amortecedores de vibração.'),
-(32, 19, '2025-10-22 13:00:00', '2025-10-28 09:00:00', 920.00, 'Conserto do motor a diesel e troca de óleo.'),
-(33, 19, '2025-11-01 08:00:00', '2025-11-05 16:30:00', 1050.00, 'Revisão do sistema de ignição e limpeza de carburador.'),
-(34, 19, '2025-11-10 14:30:00', '2025-11-14 12:00:00', 600.00, 'Alinhamento e balanceamento do disco vibratório.'),
-(35, 13, '2025-11-16 11:00:00', '2025-11-21 17:00:00', 1150.00, 'Manutenção preventiva de motores.'),
-(36, 13, '2025-11-23 09:30:00', NULL, 1500.00, 'Troca de pistão e anéis do motor. Em andamento.'),
-(37, 13, '2025-10-01 10:00:00', '2025-10-04 18:00:00', 480.00, 'Revisão do sistema de aceleração e cabos.'),
-(38, 13, '2025-10-18 13:00:00', '2025-10-25 10:00:00', 800.00, 'Reparo no tanque de combustível e mangueiras.'),
-(39, 13, '2025-11-03 14:00:00', '2025-11-08 15:30:00', 550.00, 'Troca de vela, filtro de ar e combustível.'),
-(40, 13, '2025-11-11 08:30:00', NULL, 1250.00, 'Diagnóstico de superaquecimento. Aguardando laudo.'),
-(51, 6, '2025-10-20 09:00:00', '2025-10-22 17:00:00', 450.00, 'Calibração dos sensores de CO e metano.'),
-(52, 6, '2025-11-05 14:00:00', '2025-11-07 16:00:00', 420.00, 'Substituição da célula de oxigênio.'),
-(53, 6, '2025-11-25 10:00:00', NULL, 390.00, 'Revisão periódica de segurança. Em andamento.'),
-(76, 5, '2025-10-08 07:30:00', '2025-10-10 12:00:00', 150.00, 'Troca de rodas e lubrificação dos eixos.'),
-(83, 2, '2025-11-15 14:00:00', '2025-11-18 11:00:00', 110.90, 'Reparo no mandril e substituição do cabo de força.'),
-(129, 3, '2025-11-26 10:00:00', NULL, 350.00, 'Vazamento na bomba de alta pressão. Peça de reposição solicitada.');
+(2, 20, '2025-10-15', '2025-10-20', 85.50, 'Troca de escovas e lubrificação preventiva.'),
+(3, 20, '2025-11-01', '2025-11-05', 95.00, 'Conserto do motor e substituição do cabo de energia.'),
+(4, 20, '2025-11-20', NULL, 120.00, 'Revisão completa e calibração de torque. Em andamento.'),
+(14, 1, '2025-10-25', '2025-10-28', 180.50, 'Troca da base de lixamento e verificação do motor.'),
+(15, 1, '2025-11-18', NULL, 210.00, 'Reparo na excentricidade. Aguardando peça de reposição.'),
+(18, 4, '2025-10-05', '2025-10-15', 3500.00, 'Manutenção do sistema hidráulico e troca de filtros.'),
+(19, 4, '2025-11-08', '2025-11-20', 4100.00, 'Reparo estrutural na lança e pintura protetora.'),
+(20, 4, '2025-11-25', NULL, 850.00, 'Diagnóstico eletrônico de falhas. Em análise.'),
+(21, 4, '2025-11-27', NULL, 6500.00, 'Revisão completa do motor (1000h).'),
+(31, 19, '2025-10-10', '2025-10-14', 750.00, 'Substituição de correias e amortecedores de vibração.'),
+(32, 19, '2025-10-22', '2025-10-28', 920.00, 'Conserto do motor a diesel e troca de óleo.'),
+(33, 19, '2025-11-01', '2025-11-05', 1050.00, 'Revisão do sistema de ignição e limpeza de carburador.'),
+(34, 19, '2025-11-10', '2025-11-14', 600.00, 'Alinhamento e balanceamento do disco vibratório.'),
+(35, 13, '2025-11-16', '2025-11-21', 1150.00, 'Manutenção preventiva de motores.'),
+(36, 13, '2025-11-23', NULL, 1500.00, 'Troca de pistão e anéis do motor. Em andamento.'),
+(37, 13, '2025-10-01', '2025-10-04', 480.00, 'Revisão do sistema de aceleração e cabos.'),
+(38, 13, '2025-10-18', '2025-10-25', 800.00, 'Reparo no tanque de combustível e mangueiras.'),
+(39, 13, '2025-11-03', '2025-11-08', 550.00, 'Troca de vela, filtro de ar e combustível.'),
+(40, 13, '2025-11-11', NULL, 1250.00, 'Diagnóstico de superaquecimento. Aguardando laudo.'),
+(51, 6, '2025-10-20', '2025-10-22', 450.00, 'Calibração dos sensores de CO e metano.'),
+(52, 6, '2025-11-05', '2025-11-07', 420.00, 'Substituição da célula de oxigênio.'),
+(53, 6, '2025-11-25', NULL, 390.00, 'Revisão periódica de segurança. Em andamento.'),
+(76, 5, '2025-10-08', '2025-10-10', 150.00, 'Troca de rodas e lubrificação dos eixos.'),
+(83, 2, '2025-11-15', '2025-11-18', 110.90, 'Reparo no mandril e substituição do cabo de força.'),
+(129, 3, '2025-11-26', NULL, 350.00, 'Vazamento na bomba de alta pressão. Peça de reposição solicitada.');
 
--- Tabela 7: Aluguel
-
+-- Tabela 7: Aluguel (DATAS AJUSTADAS PARA DATE)
 INSERT INTO ALUGUEL (cliente_id, funcionario_id, data_inicio, data_devolucao, valor_total) VALUES
-(1, 2, '2025-11-20 10:00:00', '2025-11-25 14:30:00', 350.50),
-(14, 5, '2025-11-15 08:30:00', '2025-11-22 17:00:00', 2100.00),
-(3, 8, '2025-11-27 11:00:00', NULL, 120.00),
-(16, 10, '2025-11-01 09:15:00', '2025-11-10 16:00:00', 850.90),
-(5, 1, '2025-10-28 14:00:00', '2025-11-04 11:45:00', 45.00),
-(11, 2, '2025-11-26 15:30:00', NULL, 650.00),
-(7, 5, '2025-11-18 10:45:00', '2025-11-28 09:00:00', 95.00),
-(20, 13, '2025-11-12 13:00:00', '2025-11-19 14:00:00', 1500.00),
-(9, 8, '2025-11-05 09:30:00', '2025-11-15 17:30:00', 280.00),
-(2, 2, '2025-10-01 16:00:00', '2025-10-30 10:00:00', 1050.00),
-(13, 15, '2025-11-21 11:30:00', NULL, 30.00),
-(4, 1, '2025-11-23 08:00:00', '2025-11-24 08:00:00', 60.00),
-(18, 5, '2025-11-10 14:15:00', '2025-11-20 13:00:00', 4200.00),
-(6, 10, '2025-11-25 10:00:00', NULL, 75.00),
-(15, 13, '2025-11-08 07:00:00', '2025-11-13 18:00:00', 1100.00),
-(8, 8, '2025-11-03 12:00:00', '2025-11-06 12:00:00', 90.00),
-(17, 2, '2025-11-27 16:45:00', NULL, 50.00),
-(10, 15, '2025-11-16 09:00:00', '2025-11-21 15:00:00', 180.00),
-(12, 1, '2025-11-02 11:00:00', '2025-11-05 11:00:00', 135.00),
-(19, 13, '2025-10-15 13:30:00', '2025-11-15 12:00:00', 310.00);
+(1, 2, '2025-11-20', '2025-11-25', 350.50), -- Tempo removido
+(14, 5, '2025-11-15', '2025-11-22', 2100.00), -- Tempo removido
+(3, 8, '2025-11-27', NULL, 120.00), -- Tempo removido
+(16, 10, '2025-11-01', '2025-11-10', 850.90), -- Tempo removido
+(5, 1, '2025-10-28', '2025-11-04', 45.00), -- Tempo removido
+(11, 2, '2025-11-26', NULL, 650.00), -- Tempo removido
+(7, 5, '2025-11-18', '2025-11-28', 95.00), -- Tempo removido
+(20, 13, '2025-11-12', '2025-11-19', 1500.00), -- Tempo removido
+(9, 8, '2025-11-05', '2025-11-15', 280.00), -- Tempo removido
+(2, 2, '2025-10-01', '2025-10-30', 1050.00), -- Tempo removido
+(13, 15, '2025-11-21', NULL, 30.00), -- Tempo removido
+(4, 1, '2025-11-23', '2025-11-24', 60.00), -- Tempo removido
+(18, 5, '2025-11-10', '2025-11-20', 4200.00), -- Tempo removido
+(6, 10, '2025-11-25', NULL, 75.00), -- Tempo removido
+(15, 13, '2025-11-08', '2025-11-13', 1100.00), -- Tempo removido
+(8, 8, '2025-11-03', '2025-11-06', 90.00), -- Tempo removido
+(17, 2, '2025-11-27', NULL, 50.00), -- Tempo removido
+(10, 15, '2025-11-16', '2025-11-21', 180.00), -- Tempo removido
+(12, 1, '2025-11-02', '2025-11-05', 135.00), -- Tempo removido
+(19, 13, '2025-10-15', '2025-11-15', 310.00); -- Tempo removido
 
--- Tabela 9: Pagamentos
-
+-- Tabela 9: Pagamentos (DATAS PADRONIZADAS PARA DATETIME2)
 INSERT INTO PAGAMENTOS (aluguel_id, valor_pago, metodo_pagamento, dt_pagamento) VALUES
-(1, 350.50, 'Cartão de Crédito', '2025-11-20 10:05:00'),
-(2, 2100.00, 'Boleto', '2025-11-15 08:45:00'),
-(3, 120.00, 'PIX', '2025-11-27 11:05:00'),
-(4, 850.90, 'Transferência Bancária', '2025-11-01 09:20:00'),
-(5, 45.00, 'Cartão de Débito', '2025-10-28 14:05:00'),
-(6, 650.00, 'PIX', '2025-11-26 15:35:00'),
-(7, 95.00, 'Dinheiro', '2025-11-18 10:50:00'),
-(8, 1500.00, 'Transferência Bancária', '2025-11-12 13:05:00'),
-(9, 140.00, 'Cartão de Crédito', '2025-11-05 09:35:00'),
-(9, 140.00, 'Cartão de Crédito', '2025-11-15 17:35:00'),
-(10, 1050.00, 'Boleto', '2025-10-01 16:10:00'),
-(11, 30.00, 'PIX', '2025-11-21 11:40:00'),
-(12, 60.00, 'Dinheiro', '2025-11-23 08:05:00'),
-(13, 2000.00, 'Transferência Bancária', '2025-11-10 14:20:00'),
-(13, 1500.00, 'Transferência Bancária', '2025-11-15 10:00:00'),
-(13, 700.00, 'Transferência Bancária', '2025-11-20 13:05:00'),
-(14, 75.00, 'PIX', '2025-11-25 10:05:00'),
-(15, 1100.00, 'Boleto', '2025-11-08 07:15:00'),
-(16, 90.00, 'Cartão de Débito', '2025-11-03 12:05:00'),
-(17, 50.00, 'PIX', '2025-11-27 16:50:00'),
-(18, 180.00, 'Dinheiro', '2025-11-16 09:10:00'),
-(19, 135.00, 'Cartão de Crédito', '2025-11-02 11:05:00'),
-(20, 310.00, 'Transferência Bancária', '2025-10-15 13:35:00'),
-(1, 0.00, 'PIX', '2025-11-25 14:35:00'),
-(2, 0.00, 'Dinheiro', '2025-11-22 17:05:00');
+(1, 350.50, 'Cartão de Crédito', '2025-11-20 10:05:00.000'), -- Padrão DATETIME2
+(2, 2100.00, 'Boleto', '2025-11-15 08:45:00.000'),
+(3, 120.00, 'PIX', '2025-11-27 11:05:00.000'),
+(4, 850.90, 'Transferência Bancária', '2025-11-01 09:20:00.000'),
+(5, 45.00, 'Cartão de Débito', '2025-10-28 14:05:00.000'),
+(6, 650.00, 'PIX', '2025-11-26 15:35:00.000'),
+(7, 95.00, 'Dinheiro', '2025-11-18 10:50:00.000'),
+(8, 1500.00, 'Transferência Bancária', '2025-11-12 13:05:00.000'),
+(9, 140.00, 'Cartão de Crédito', '2025-11-05 09:35:00.000'),
+(9, 140.00, 'Cartão de Crédito', '2025-11-15 17:35:00.000'),
+(10, 1050.00, 'Boleto', '2025-10-01 16:10:00.000'),
+(11, 30.00, 'PIX', '2025-11-21 11:40:00.000'),
+(12, 60.00, 'Dinheiro', '2025-11-23 08:05:00.000'),
+(13, 2000.00, 'Transferência Bancária', '2025-11-10 14:20:00.000'),
+(13, 1500.00, 'Transferência Bancária', '2025-11-15 10:00:00.000'),
+(13, 700.00, 'Transferência Bancária', '2025-11-20 13:05:00.000'),
+(14, 75.00, 'PIX', '2025-11-25 10:05:00.000'),
+(15, 1100.00, 'Boleto', '2025-11-08 07:15:00.000'),
+(16, 90.00, 'Cartão de Débito', '2025-11-03 12:05:00.000'),
+(17, 50.00, 'PIX', '2025-11-27 16:50:00.000'),
+(18, 180.00, 'Dinheiro', '2025-11-16 09:10:00.000'),
+(19, 135.00, 'Cartão de Crédito', '2025-11-02 11:05:00.000'),
+(20, 310.00, 'Transferência Bancária', '2025-10-15 13:35:00.000'),
+(1, 0.00, 'PIX', '2025-11-25 14:35:00.000'), -- Pagamento de multa?
+(2, 0.00, 'Dinheiro', '2025-11-22 17:05:00.000'); -- Pagamento de multa?
 
--- Tabela 11: Multas
-
+-- Tabela 11: Multas (DATAS PADRONIZADAS PARA DATETIME2)
 INSERT INTO MULTAS (aluguel_id, valor_multa, descricao, dt_multa, status_pagamento) VALUES
-(1, 75.00, 'Atraso de 1 dia na devolução do equipamento.', '2025-11-26 10:00:00', 'Pago'),
-(2, 210.00, 'Dano leve no equipamento (Placa Vibratória).', '2025-11-22 17:30:00', 'Pendente'),
-(4, 85.09, 'Atraso na devolução de 12 horas.', '2025-11-11 08:00:00', 'Pago'),
-(5, 15.00, 'Equipamento devolvido sujo.', '2025-11-04 12:00:00', 'Pago'),
-(7, 20.00, 'Atraso de 3 horas na devolução.', '2025-11-28 12:00:00', 'Pago'),
-(8, 300.00, 'Perda de acessório da Mini Escavadeira.', '2025-11-19 14:15:00', 'Pendente'),
-(9, 56.00, 'Atraso de 2 dias na devolução.', '2025-11-17 09:00:00', 'Pago'),
-(10, 150.00, 'Dano moderado na Bomba Submersível.', '2025-10-30 11:30:00', 'Pago'),
-(12, 12.00, 'Atraso de 4 horas na devolução.', '2025-11-24 12:00:00', 'Pago'),
-(13, 840.00, 'Dano grave no equipamento (Retroescavadeira).', '2025-11-20 14:00:00', 'Pendente'),
-(15, 110.00, 'Atraso de 1 dia na devolução.', '2025-11-14 10:00:00', 'Pago'),
-(16, 18.00, 'Equipamento devolvido sujo (Mini Escavadeira).', '2025-11-06 12:30:00', 'Pago'),
-(18, 500.00, 'Dano leve na Torre de Iluminação Móvel.', '2025-11-20 13:45:00', 'Pendente'),
-(19, 31.00, 'Atraso de 1 dia na devolução.', '2025-11-16 11:00:00', 'Pago'),
-(3, 15.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00', 'Pendente'),
-(6, 20.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00', 'Pendente'),
-(11, 20.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00', 'Pendente'),
-(17, 10.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00', 'Pendente'),
-(14, 5.00, 'Taxa administrativa por processamento de multa anterior.', '2025-10-20 15:00:00', 'Pago'),
-(1, 10.00, 'Taxa de reembalagem por devolução inadequada.', '2025-11-25 15:00:00', 'Pago');
+(1, 75.00, 'Atraso de 1 dia na devolução do equipamento.', '2025-11-26 10:00:00.000', 'Pago'),
+(2, 210.00, 'Dano leve no equipamento (Placa Vibratória).', '2025-11-22 17:30:00.000', 'Pendente'),
+(4, 85.09, 'Atraso na devolução de 12 horas.', '2025-11-11 08:00:00.000', 'Pago'),
+(5, 15.00, 'Equipamento devolvido sujo.', '2025-11-04 12:00:00.000', 'Pago'),
+(7, 20.00, 'Atraso de 3 horas na devolução.', '2025-11-28 12:00:00.000', 'Pago'),
+(8, 300.00, 'Perda de acessório da Mini Escavadeira.', '2025-11-19 14:15:00.000', 'Pendente'),
+(9, 56.00, 'Atraso de 2 dias na devolução.', '2025-11-17 09:00:00.000', 'Pago'),
+(10, 150.00, 'Dano moderado na Bomba Submersível.', '2025-10-30 11:30:00.000', 'Pago'),
+(12, 12.00, 'Atraso de 4 horas na devolução.', '2025-11-24 12:00:00.000', 'Pago'),
+(13, 840.00, 'Dano grave no equipamento (Retroescavadeira).', '2025-11-20 14:00:00.000', 'Pendente'),
+(15, 110.00, 'Atraso de 1 dia na devolução.', '2025-11-14 10:00:00.000', 'Pago'),
+(16, 18.00, 'Equipamento devolvido sujo (Mini Escavadeira).', '2025-11-06 12:30:00.000', 'Pago'),
+(18, 500.00, 'Dano leve na Torre de Iluminação Móvel.', '2025-11-20 13:45:00.000', 'Pendente'),
+(19, 31.00, 'Atraso de 1 dia na devolução.', '2025-11-16 11:00:00.000', 'Pago'),
+(3, 15.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00.000', 'Pendente'),
+(6, 20.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00.000', 'Pendente'),
+(11, 20.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00.000', 'Pendente'),
+(17, 10.00, 'Multa diária por atraso (Aluguel em aberto).', '2025-11-29 09:00:00.000', 'Pendente'),
+(14, 5.00, 'Taxa administrativa por processamento de multa anterior.', '2025-10-20 15:00:00.000', 'Pago'),
+(1, 10.00, 'Taxa de reembalagem por devolução inadequada.', '2025-11-25 15:00:00.000', 'Pago');
 
--- Tabela 8: Aluguem_Item
-
+-- Tabela 8: Alugem_Item
 INSERT INTO ALUGUEL_ITEM (aluguel_id, equipamento_id, quantidade, valor_diaria) VALUES
 (1, 1, 1, 25.50),
 (1, 13, 1, 35.00),
