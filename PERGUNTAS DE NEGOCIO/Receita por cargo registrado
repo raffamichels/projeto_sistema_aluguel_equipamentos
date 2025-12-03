@@ -1,0 +1,18 @@
+  USE [ProjetoFinal];  
+GO
+SELECT  
+    
+    ISNULL(F.cargo, 'Funcionário Não Identificado') AS cargo,
+       
+    SUM(A.valor_total) AS TotalReceitaRegistrada,
+
+    COUNT(A.aluguel_id) AS QuantidadeDeContratos  
+FROM  
+    ALUGUEL AS A  
+LEFT JOIN   
+    FUNCIONARIOS AS F ON A.funcionario_id = F.funcionario_id  
+GROUP BY    
+    ISNULL(F.cargo, 'Funcionário Não Identificado')  
+ORDER BY  
+    TotalReceitaRegistrada DESC;  
+GO  
