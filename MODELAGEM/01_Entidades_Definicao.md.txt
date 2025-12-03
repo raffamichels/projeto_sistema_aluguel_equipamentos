@@ -1,0 +1,230 @@
+# 01 Definição das Entidades Chave (Modelo RentEasy - 12 Tabelas)
+
+## Escopo do Projeto: Aluguel de Equipamentos (RentEasy)
+
+O modelo físico é projetado com 12 tabelas para garantir a robustez e a complexidade necessária para atender a todos os requisitos do trabalho (Normalização, 4 Constraints, Objetos e 6 Perguntas de Negócio).
+
+---
+
+## I. Resumo das 12 Entidades (Modelo Físico)
+
+| Tabela | Propósito e Ligação Principal |
+| :--- | :--- |
+| **1. Cliente** | Dados cadastrais dos clientes que alugam. |
+| **2. Funcionários** | Dados da equipe interna que processa os aluguéis. |
+| **3. Endereço** | Endereços completos, isolados para uso por Clientes ou Logística. |
+| **4. Categorias** | Classificação dos Equipamentos. |
+| **5. Equipamento** | Dados mestres do produto (Modelo, Fabricante). |
+| **6. Estoque** | **Unidades Físicas** do equipamento (N° de Série, Status). |
+| **7. Aluguel** | Transação principal (Pedido, Datas de Início/Fim, Valor Total). |
+| **8. Aluguel_Item** | **Relação N:N**. Liga a transação de Aluguel ao item específico do Estoque. |
+| **9. Pagamentos** | Registro de todos os pagamentos e métodos de pagamento. |
+| **10. Manutencoes** | Registra o histórico e custos de manutenção dos itens do Estoque. |
+| **11. Multas** | Registra multas aplicadas por atraso ou danos ao equipamento alugado. |
+| **12. Fornecedores** | Registra fornecedores de materiais e manutenções das ferramentas. |
+
+---
+
+## II. Detalhamento do Modelo Físico (Entidade e Colunas)
+
+### 1. Clientes
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **cliente_id** | **PK** | INT | Chave Primária |
+| **nome** | | VARCHAR(100) | |
+| **cpf** | **UNIQUE** | CHAR(14) | |
+| **email** | | VARCHAR(100) | Login no Front-end (RentEasy) |
+| **telefone** | | VARCHAR(15) | |
+-- Constraint adicional (UNIQUE) para cpf
+ALTER TABLE Clientes
+ADD CONSTRAINT UQ_CLIENTE_CPF UNIQUE (cpf);
+
+
+### 2. Funcionário
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **funcionario_id** | **PK** | INT | Chave Primária |
+| **nome** | | VARCHAR(100) | |
+| **cargo** | | VARCHAR(50) | Cargo ocupado pelo funcionário |
+| **data_contratacao** | | DATE | Data da contratação |
+-- ALTERAÇÃO: CHECK para garantir que a data de contratação não seja futura.
+    CONSTRAINT CK_FUNC_CONTRATACAO CHECK (dt_contratacao <= GETDATE())
+);
+-- ALTERAÇÃO: DEFAULT para data de contratação
+ALTER TABLE Funcionarios
+ADD CONSTRAINT DF_FUNC_CONTRATACAO DEFAULT GETDATE() FOR dt_contratacao;
+
+### 3. Endereço
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **endereco_id** | **PK** | INT | Chave Primária |
+| **logradouro** | | VARCHAR(100) | |
+| **bairro** | | VARCHAR(50) | |
+| **numero** | | VARCHAR(10) | |
+| **complemento** | | VARCHAR(50) NULL | |
+| **cidade** | | VARCHAR(50) | |
+| **estado** | | CHAR(2) | |
+| **cep** | | VARCHAR(8) | |
+-- Alteração: Cep agora é Char(8)
+
+### 4. Categoria
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **categoria_id** | **PK** | INT | Chave Primária |
+| **nome_categoria** | **UNIQUE** | VARCHAR(50) | Ex: 'Ferramentas Pesadas' |
+| **descricao** | | VARCHAR(255) | |
+-- CONSTRAINT ADICIONAL (UNIQUE)
+ALTER TABLE Categoria
+ADD CONSTRAINT UQ_CAT_NOME UNIQUE (nome_categoria);
+
+### 5. Equipamento
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **equipamento_id** | **PK** | INT | Chave Primária |
+| **nome** | | VARCHAR(100) | Nome comercial do item |
+| **modelo** | | VARCHAR(100) | Modelo do item |
+| **numero_serie** | | VARCHAR(50) | Código do item |
+| **preco_diaria** | | DECIMAL(10,2) | Aluguel diário do item |
+| **status** | | VARCHAR(20) | Situação do item |
+| **categoria_id** | **FK** | INT | Liga a categoria (Tabela Categoria) |
+-- FK: Liga à Categoria
+ALTER TABLE Equipamento
+ADD CONSTRAINT FK_EQUIP_CAT FOREIGN KEY (categoria_id) REFERENCES Categoria(categoria_id);
+-- ALTERAÇÃO: CHECK para garantir preço positivo
+ALTER TABLE Equipamento
+ADD CONSTRAINT CK_PRECO_MINIMO CHECK (preco_diaria > 0.00);
+
+### 6. Estoque
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **estoque_id** | **PK** | INT | Chave Primária |
+| **equipamento_id** | **FK** | INT | Liga ao equipamento (Tabela Equipamento) |
+| **quant_disponivel** | | SMALLINT | Controle quantitativo do estoque disponível |
+| **quant_total** | | SMALLINT | Controle quantitativo do estoque total |
+| **data_revisao** | | DATETIME | Última atualização registrada |
+-- FK: Liga ao Equipamento
+ALTER TABLE Estoque
+ADD CONSTRAINT FK_ESTOQUE_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id);
+-- ALTERAÇÃO: CHECK para evitar estoque negativo
+ALTER TABLE Estoque
+ADD CONSTRAINT CK_ESTOQUE_LIMITES CHECK (quant_disponivel >= 0 AND quant_disponivel <= quant_total);
+-- ALTERAÇÃO: DEFAULT para data de revisão
+ALTER TABLE Estoque
+ADD CONSTRAINT DF_ESTOQUE_ATUAL DEFAULT GETDATE() FOR data_revisao;
+
+
+### 7. Aluguel
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **aluguel_id** | **PK** | INT | Chave Primária |
+| **cliente_id** | **FK** | INT | |
+| **funcionario_id** | **FK** | INT | |
+| **data_inicio** | | DATETIME | |
+| **data_devolucao** | | DATETIME | |
+| **valor_total** | | DECIMAL(10,2) | |
+-- FKs: Liga a Clientes e Funcionários
+ALTER TABLE Aluguel
+ADD CONSTRAINT FK_ALUGUEL_CLIENTE FOREIGN KEY (cliente_id) REFERENCES Clientes(cliente_id),
+    CONSTRAINT FK_ALUGUEL_FUNC FOREIGN KEY (funcionario_id) REFERENCES Funcionarios(funcionario_id);
+-- ALTERAÇÃO: DEFAULT para data de início
+ALTER TABLE Aluguel
+ADD CONSTRAINT DF_ALUGUEL_INICIO DEFAULT GETDATE() FOR data_inicio;
+-- ALTERAÇÃO: CHECK para garantir que a devolução prevista não seja anterior ao início
+ALTER TABLE Aluguel
+ADD CONSTRAINT CK_DEVOL_DATA CHECK (data_prevista_devolucao >= data_inicio);
+
+
+### 8. Aluguel_Item (Relação N:N)
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **aluguel_id** | **PK, FK** | INT | Parte da PK Composta |
+| **equipamento_id** | **PK, FK** | INT | O item alugado |
+| **quantidade** | | SMALLINT | |
+| **valor_diaria** | | DECIMAL(10,2) | |
+-- FKs: Liga a Aluguel e Equipamento
+ALTER TABLE Aluguel_Item
+ADD CONSTRAINT FK_ITEM_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id),
+    CONSTRAINT FK_ITEM_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id);
+-- ALTERAÇÃO: CHECK para quantidade
+ALTER TABLE Aluguel_Item
+ADD CONSTRAINT CK_ITEM_QUANTIDADE CHECK (quantidade > 0);
+
+### 9. Pagamentos
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **pagamento_id** | **PK** | INT | Chave Primária |
+| **aluguel_id** | **FK** | INT | |
+| **valor_pago** | | DECIMAL(10,2) | |
+| **metodo_pagamento** | | VARCHAR(50) | 'PIX', 'Cartão', 'Boleto' |
+| **dt_pagamento** | | DATETIME | |
+-- FK: Liga ao Aluguel
+ALTER TABLE Pagamento
+ADD CONSTRAINT FK_PAGTO_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id);
+-- ALTERAÇÃO: CHECK para método de pagamento
+ALTER TABLE Pagamento
+ADD CONSTRAINT CK_METODO_VALIDO CHECK (metodo_pagamento IN ('PIX', 'Cartão', 'Boleto'));
+-- ALTERAÇÃO: DEFAULT para data de pagamento
+ALTER TABLE Pagamento
+ADD CONSTRAINT DF_DT_PAGAMENTO DEFAULT GETDATE() FOR dt_pagamento;
+
+### 10. Manutenções
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **manutencao_id** | **PK** | INT | |
+| **equipamento_id** | **FK** | INT | Item que está em manutenção |
+| **fornecedor_id** | **FK** | INT | Fornecedor do serviço |
+| **dt_inicio** | | DATETIME | |
+| **dt_final** | | DATETIME | |
+| **custo** | | DECIMAL(10,2) | |
+| **descricao** | | VARCHAR(255) | |
+-- FKs: Liga ao Equipamento e Fornecedor
+ALTER TABLE Manutencao
+ADD CONSTRAINT FK_MANUT_EQUIP FOREIGN KEY (equipamento_id) REFERENCES Equipamento(equipamento_id),
+    CONSTRAINT FK_MANUT_FORN FOREIGN KEY (fornecedor_id) REFERENCES Fornecedores(fornecedor_id);
+-- ALTERAÇÃO: CHECK para custo
+ALTER TABLE Manutencao
+ADD CONSTRAINT CK_MANUT_CUSTO CHECK (custo >= 0);
+
+
+### 11. Multas
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **multa_id** | **PK** | INT | |
+| **aluguel_id** | **FK** | INT | Aluguel que gerou a multa |
+| **valor_multa** | | DECIMAL(10,2) | |
+| **descricao** | | VARCHAR(255) | Justificativa |
+| **dt_multa** | | DATETIME | |
+| **status_pagamento** | | VARCHAR(20) | 'Pendente', 'Pago' |
+-- FK: Liga ao Aluguel
+ALTER TABLE Multas
+ADD CONSTRAINT FK_MULTA_ALUGUEL FOREIGN KEY (aluguel_id) REFERENCES Aluguel(aluguel_id);
+-- ALTERAÇÃO: CHECK para valor
+ALTER TABLE Multas
+ADD CONSTRAINT CK_MULTA_VALOR CHECK (valor_multa > 0.00);
+-- ALTERAÇÃO: DEFAULT para data
+ALTER TABLE Multas
+ADD CONSTRAINT DF_MULTA_DATA DEFAULT GETDATE() FOR data_aplicacao;
+
+### 12. Fornecedores
+
+| Coluna | Chave | Tipo Sugerido | Descrição |
+| :--- | :--- | :--- | :--- |
+| **fornecedor_id** | **PK** | INT | Chave Primária |
+| **nome** | **UNIQUE** | VARCHAR(100) NOT NULL | |
+--CNPJ alterado para char(18)
+| **cnpj** | **UNIQUE** | CHAR(14) NOT NULL | |
+| **telefone** | | VARCHAR(15) | |
+-- CONSTRAINT ADICIONAL (UNIQUE) para CNPJ
+ALTER TABLE Fornecedores
+ADD CONSTRAINT UQ_FORN_CNPJ UNIQUE (cnpj);
