@@ -1,21 +1,21 @@
--- 5: Receita Total Gerada por Funcion·rio (REVISADA E CORRIGIDA)
+-- 5: Receita Total Gerada por Funcion√°rio (REVISADA E CORRIGIDA)
 -- =========================================================================
--- 5: Para cada funcion·rio, qual o total de receita gerada pelos contratos que ele registrou?
+-- 5: Para cada funcion√°rio, qual o total de receita gerada pelos contratos que ele registrou?
 SELECT
     F.funcionario_id,
     F.nome AS NomeFuncionario,
     F.cargo AS CargoFuncionario,
-    -- COALESCE garante que funcion·rios sem aluguÈis apareÁam com 0.00
+    -- COALESCE garante que funcion√°rios sem alugu√©is apare√ßam com 0.00
     COALESCE(SUM(P.valor_pago), 0.00) AS ReceitaTotalGerada
 FROM
-    dbo.FUNCIONARIOS F -- Adicionado 'dbo.'
+    dbo.FUNCIONARIOS F 
 LEFT JOIN
-    ALUGUEL A ON F.funcionario_id = A.funcionario_id -- LEFT JOIN para incluir todos os funcion·rios
+    ALUGUEL A ON F.funcionario_id = A.funcionario_id -- LEFT JOIN para incluir todos os funcion√°rios
 LEFT JOIN
-    PAGAMENTOS P ON A.aluguel_id = P.aluguel_id     -- Soma todos os pagamentos (aluguÈis + multas)
+    PAGAMENTOS P ON A.aluguel_id = P.aluguel_id     -- Soma todos os pagamentos (alugu√©is + multas)
 GROUP BY
     F.funcionario_id,
     F.nome,
-    F.cargo -- Agrupamento individual por funcion·rio
+    F.cargo -- Agrupamento individual por funcion√°rio
 ORDER BY
     ReceitaTotalGerada DESC;
