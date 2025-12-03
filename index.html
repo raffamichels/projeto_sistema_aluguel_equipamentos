@@ -1,1421 +1,434 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RentEasy - Alugue Qualquer Equipamento em Minutos</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            overflow-x: hidden;
-        }
-
-        /* Animated Background */
-        .bg-gradient {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            z-index: -2;
-        }
-
-        .bg-particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: -1;
-            opacity: 0.3;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: #3b82f6;
-            border-radius: 50%;
-            animation: float 15s infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-100px) translateX(50px); }
-        }
-
-        /* Header */
-        header {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            transition: all 0.3s;
-        }
-
-        header.scrolled {
-            background: rgba(15, 23, 42, 0.95);
-            box-shadow: 0 10px 40px rgba(59, 130, 246, 0.2);
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 28px;
-            font-weight: 800;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .logo:hover {
-            transform: scale(1.05);
-        }
-
-        nav {
-            display: flex;
-            gap: 40px;
-        }
-
-        nav a {
-            color: #cbd5e1;
-            text-decoration: none;
-            font-weight: 600;
-            position: relative;
-            transition: color 0.3s;
-        }
-
-        nav a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-            transition: width 0.3s;
-        }
-
-        nav a:hover {
-            color: #3b82f6;
-        }
-
-        nav a:hover::after {
-            width: 100%;
-        }
-
-        .header-buttons {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .notification-btn {
-            background: rgba(59, 130, 246, 0.1);
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .notification-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-            transform: scale(1.1);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 8px;
-            height: 8px;
-            background: #ef4444;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.7; }
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .btn-login {
-            background: transparent;
-            color: #cbd5e1;
-            border: 2px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-login:hover {
-            border-color: #3b82f6;
-            color: #3b82f6;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-register {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: white;
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-register:hover {
-            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5);
-            transform: translateY(-2px);
-        }
-
-        /* Hero Section */
-        .hero {
-            text-align: center;
-            padding: 100px 20px 80px;
-            position: relative;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 10px 25px;
-            border-radius: 50px;
-            margin-bottom: 30px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #60a5fa;
-            animation: fadeInDown 0.8s;
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        h1 {
-            font-size: 72px;
-            color: #f1f5f9;
-            margin-bottom: 25px;
-            line-height: 1.1;
-            animation: fadeInUp 0.8s;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .gradient-title {
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: block;
-        }
-
-        .subtitle {
-            font-size: 22px;
-            color: #94a3b8;
-            margin-bottom: 50px;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.6;
-            animation: fadeIn 1s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Advanced Search */
-        .search-container {
-            max-width: 800px;
-            margin: 0 auto 40px;
-            position: relative;
-            animation: fadeInUp 1s 0.3s both;
-        }
-
-        .search-box {
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid rgba(59, 130, 246, 0.2);
-            border-radius: 60px;
-            padding: 8px;
-            display: flex;
-            gap: 10px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s;
-        }
-
-        .search-box:focus-within {
-            border-color: #3b82f6;
-            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
-        }
-
-        .search-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 18px 25px;
-            color: #e2e8f0;
-            font-size: 16px;
-            outline: none;
-        }
-
-        .search-input::placeholder {
-            color: #64748b;
-        }
-
-        .search-filters {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .filter-btn {
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 10px 20px;
-            border-radius: 30px;
-            color: #60a5fa;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .filter-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-            transform: scale(1.05);
-        }
-
-        .search-btn {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: white;
-            border: none;
-            padding: 18px 40px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
-        }
-
-        .search-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6);
-        }
-
-        /* Quick Stats */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 80px;
-        }
-
-        .stat-card {
-            text-align: center;
-            padding: 25px;
-            animation: fadeInUp 1s both;
-        }
-
-        .stat-card:nth-child(1) { animation-delay: 0.2s; }
-        .stat-card:nth-child(2) { animation-delay: 0.3s; }
-        .stat-card:nth-child(3) { animation-delay: 0.4s; }
-        .stat-card:nth-child(4) { animation-delay: 0.5s; }
-
-        .stat-number {
-            font-size: 48px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            color: #94a3b8;
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        /* Benefits Section */
-        .benefits {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
-            margin-bottom: 100px;
-        }
-
-        .benefit-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-            padding: 50px 35px;
-            border-radius: 30px;
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            transition: all 0.5s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .benefit-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        .benefit-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 30px 60px rgba(59, 130, 246, 0.3);
-            border-color: rgba(59, 130, 246, 0.4);
-        }
-
-        .benefit-card:hover::before {
-            opacity: 1;
-        }
-
-        .icon-wrapper {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 25px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 42px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-            border: 2px solid rgba(59, 130, 246, 0.3);
-            transition: all 0.3s;
-        }
-
-        .benefit-card:hover .icon-wrapper {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
-        }
-
-        .benefit-card h3 {
-            font-size: 24px;
-            margin-bottom: 15px;
-            color: #f1f5f9;
-            text-align: center;
-        }
-
-        .benefit-card p {
-            color: #94a3b8;
-            line-height: 1.7;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        /* Categories */
-        .section-title {
-            font-size: 48px;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 20px;
-            color: #f1f5f9;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 18px;
-            margin-bottom: 60px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
-            margin-bottom: 100px;
-        }
-
-        .category-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.7));
-            padding: 40px 30px;
-            border-radius: 25px;
-            text-align: center;
-            cursor: pointer;
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            transition: all 0.4s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .category-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-
-        .category-card:hover {
-            transform: translateY(-15px) scale(1.05);
-            box-shadow: 0 30px 60px rgba(59, 130, 246, 0.4);
-            border-color: rgba(59, 130, 246, 0.5);
-        }
-
-        .category-card:hover::before {
-            opacity: 1;
-        }
-
-        .category-icon {
-            font-size: 56px;
-            margin-bottom: 20px;
-            display: block;
-            transition: transform 0.4s;
-        }
-
-        .category-card:hover .category-icon {
-            transform: scale(1.2) rotate(10deg);
-        }
-
-        .category-card h3 {
-            font-size: 20px;
-            color: #f1f5f9;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        .category-count {
-            color: #64748b;
-            font-size: 14px;
-            font-weight: 600;
-            position: relative;
-        }
-
-        /* Featured Products */
-        .featured-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 60px;
-        }
-
-        .view-all {
-            color: #60a5fa;
-            text-decoration: none;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .view-all:hover {
-            color: #3b82f6;
-            transform: translateX(5px);
-        }
-
-        .products {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 35px;
-            margin-bottom: 100px;
-        }
-
-        .product-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-            border-radius: 25px;
-            overflow: hidden;
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            transition: all 0.5s;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .product-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
-            opacity: 0;
-            transition: opacity 0.5s;
-        }
-
-        .product-card:hover {
-            transform: translateY(-15px) scale(1.02);
-            box-shadow: 0 40px 80px rgba(59, 130, 246, 0.4);
-            border-color: rgba(59, 130, 246, 0.5);
-        }
-
-        .product-card:hover::before {
-            opacity: 1;
-        }
-
-        .product-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            z-index: 1;
-            box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
-        }
-
-        .product-image {
-            height: 240px;
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 80px;
-            transition: transform 0.5s;
-            position: relative;
-        }
-
-        .product-card:hover .product-image {
-            transform: scale(1.1);
-        }
-
-        .product-info {
-            padding: 25px;
-            position: relative;
-        }
-
-        .product-info h3 {
-            font-size: 20px;
-            color: #f1f5f9;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .product-description {
-            color: #94a3b8;
-            font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .product-details {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .price-container {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .price {
-            color: #3b82f6;
-            font-weight: 800;
-            font-size: 28px;
-        }
-
-        .price-period {
-            color: #64748b;
-            font-size: 12px;
-        }
-
-        .rating {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #fbbf24;
-            font-size: 16px;
-            font-weight: 700;
-        }
-
-        .rent-button {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-        }
-
-        .rent-button:hover {
-            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.5);
-            transform: translateY(-2px);
-        }
-
-        /* Testimonials */
-        .testimonials {
-            margin-bottom: 100px;
-        }
-
-        .testimonial-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-        }
-
-        .testimonial-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.8));
-            padding: 40px;
-            border-radius: 25px;
-            border: 1px solid rgba(59, 130, 246, 0.1);
-            transition: all 0.3s;
-        }
-
-        .testimonial-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.3);
-        }
-
-        .testimonial-header {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .testimonial-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .testimonial-info h4 {
-            color: #f1f5f9;
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-
-        .testimonial-role {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .testimonial-text {
-            color: #94a3b8;
-            line-height: 1.7;
-            font-size: 16px;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 40px;
-            padding: 80px 60px;
-            text-align: center;
-            margin-bottom: 100px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .cta-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-section h2 {
-            font-size: 42px;
-            color: #f1f5f9;
-            margin-bottom: 20px;
-        }
-
-        .cta-section p {
-            font-size: 18px;
-            color: #94a3b8;
-            margin-bottom: 40px;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-cta-primary {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: white;
-            padding: 18px 50px;
-            border-radius: 50px;
-            border: none;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
-        }
-
-        .btn-cta-primary:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6);
-        }
-
-        .btn-cta-secondary {
-            background: transparent;
-            color: #60a5fa;
-            padding: 18px 50px;
-            border-radius: 50px;
-            border: 2px solid rgba(59, 130, 246, 0.5);
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-cta-secondary:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: #3b82f6;
-            transform: translateY(-5px);
-        }
-
-        /* Footer */
-        footer {
-            background: rgba(15, 23, 42, 0.9);
-            border-top: 1px solid rgba(59, 130, 246, 0.1);
-            padding: 80px 20px 30px;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 50px;
-            margin-bottom: 50px;
-        }
-
-        .footer-column h4 {
-            margin-bottom: 25px;
-            font-size: 20px;
-            color: #f1f5f9;
-        }
-
-        .footer-logo {
-            font-size: 32px;
-            font-weight: 800;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
-        }
-
-        .footer-text {
-            color: #94a3b8;
-            line-height: 1.7;
-            margin-bottom: 25px;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-        }
-
-        .social-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 20px;
-        }
-
-        .social-btn:hover {
-            background: rgba(59, 130, 246, 0.2);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-        }
-
-        .footer-column ul {
-            list-style: none;
-        }
-
-        .footer-column li {
-            margin-bottom: 15px;
-        }
-
-        .footer-column a {
-            color: #94a3b8;
-            text-decoration: none;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .footer-column a:hover {
-            color: #3b82f6;
-            transform: translateX(5px);
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(59, 130, 246, 0.1);
-            padding-top: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: #64748b;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 30px;
-        }
-
-        .footer-links a {
-            color: #64748b;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .footer-links a:hover {
-            color: #3b82f6;
-        }
-
-        @media (max-width: 768px) {
-            h1 { font-size: 42px; }
-            nav, .header-buttons .btn { display: none; }
-            .categories { grid-template-columns: repeat(2, 1fr); }
-            .search-filters { display: none; }
-            .stats { grid-template-columns: repeat(2, 1fr); }
-            .cta-section { padding: 50px 30px; }
-            .cta-section h2 { font-size: 32px; }
-        }
-    </style>
-</head>
-<body>
-    <div class="bg-gradient"></div>
-    <div class="bg-particles" id="particles"></div>
-
-    <header id="header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">⚡ RentEasy</div>
-                <nav>
-                    <a href="#categorias">Categorias</a>
-                    <a href="#como-funciona">Como Funciona</a>
-                    <a href="#depoimentos">Depoimentos</a>
-                    <a href="#contato">Contato</a>
-                </nav>
-                <div class="header-buttons">
-                    <button class="notification-btn">
-                        🔔
-                        <span class="notification-badge"></span>
-                    </button>
-                    <button class="btn btn-login">Entrar</button>
-                    <button class="btn btn-register">Começar Grátis</button>
-                </div>
+import React, { useState } from 'react';
+import { Search, ShoppingCart, Users, Package, Wrench, DollarSign, AlertTriangle, BarChart3, Menu, Home, FileText, Clock, Settings } from 'lucide-react';
+
+const SistemaAluguelEquipamentos = () => {
+  const [paginaAtual, setPaginaAtual] = useState('dashboard');
+  const [menuAberto, setMenuAberto] = useState(false);
+  const [carrinho, setCarrinho] = useState([]);
+  const [busca, setBusca] = useState('');
+
+  // Dados simulados baseados no banco
+  const categorias = [
+    { id: 1, nome: 'Ferramentas Elétricas', total: 25 },
+    { id: 2, nome: 'Máquinas Pesadas', total: 14 },
+    { id: 3, nome: 'Equipamentos de Jardinagem', total: 8 },
+    { id: 4, nome: 'Segurança e EPIs', total: 16 },
+    { id: 5, nome: 'Compressores e Geradores', total: 6 },
+  ];
+
+  const equipamentos = [
+    { id: 1, nome: 'Furadeira de Impacto', modelo: 'Bosch GSB 550', preco: 25.50, status: 'Disponível', categoria: 'Ferramentas Elétricas', estoque: 8 },
+    { id: 16, nome: 'Mini Escavadeira', modelo: 'Bobcat E10', preco: 850.00, status: 'Disponível', categoria: 'Máquinas Pesadas', estoque: 6 },
+    { id: 28, nome: 'Placa Vibratória', modelo: 'Wacker Neuson VP1550', preco: 120.00, status: 'Disponível', categoria: 'Máquinas Pesadas', estoque: 2 },
+    { id: 43, nome: 'Motosserra a Gasolina', modelo: 'Stihl MS 170', preco: 90.00, status: 'Disponível', categoria: 'Jardinagem', estoque: 5 },
+    { id: 67, nome: 'Gerador a Diesel 5 kVA', modelo: 'Honda EU7000', preco: 350.00, status: 'Disponível', categoria: 'Geradores', estoque: 4 },
+    { id: 117, nome: 'Máquina de Solda Inversora', modelo: 'Esab Bantam 140i', preco: 95.00, status: 'Disponível', categoria: 'Serralheria', estoque: 8 },
+    { id: 127, nome: 'Nível a Laser Rotativo', modelo: 'Spectra Precision HV302', preco: 180.00, status: 'Disponível', categoria: 'Medição', estoque: 1 },
+    { id: 162, nome: 'Plataforma Elevatória Tesoura', modelo: 'Skyjack SJIII', preco: 600.00, status: 'Disponível', categoria: 'Elevação', estoque: 4 },
+  ];
+
+  const alugueisAtivos = [
+    { id: 3, cliente: 'Pedro Henrique', equipamento: 'Paleteira Manual 2.5T', dataInicio: '2025-11-27', valor: 120.00, status: 'Em andamento' },
+    { id: 6, cliente: 'Engenharia Delta', equipamento: 'Nível a Laser Rotativo', dataInicio: '2025-11-26', valor: 650.00, status: 'Em andamento' },
+    { id: 11, cliente: 'Alexandre Costa', equipamento: 'Placa Vibratória', dataInicio: '2025-11-21', valor: 30.00, status: 'Em andamento' },
+    { id: 14, cliente: 'Luciana Martins', equipamento: 'Mini Escavadeira', dataInicio: '2025-11-25', valor: 75.00, status: 'Em andamento' },
+  ];
+
+  const manutencoes = [
+    { id: 4, equipamento: 'Furadeira de Impacto', fornecedor: 'Assistência Técnica Autorizada Bosch', inicio: '2025-11-20', status: 'Em andamento', custo: 120.00 },
+    { id: 15, equipamento: 'Lixadeira Roto Orbital', fornecedor: 'Manutenção Diesel e Hidráulica MG', inicio: '2025-11-18', status: 'Em andamento', custo: 210.00 },
+    { id: 36, equipamento: 'Placa Vibratória', fornecedor: 'Manutenção Preventiva de Motores', inicio: '2025-11-23', status: 'Em andamento', custo: 1500.00 },
+  ];
+
+  const adicionarAoCarrinho = (equipamento) => {
+    setCarrinho([...carrinho, equipamento]);
+    alert(`${equipamento.nome} adicionado ao carrinho!`);
+  };
+
+  const removerDoCarrinho = (id) => {
+    setCarrinho(carrinho.filter(item => item.id !== id));
+  };
+
+  const calcularTotalCarrinho = () => {
+    return carrinho.reduce((total, item) => total + item.preco, 0);
+  };
+
+  // Dashboard
+  const Dashboard = () => (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm">Equipamentos Disponíveis</p>
+              <p className="text-3xl font-bold mt-2">156</p>
             </div>
+            <Package className="w-12 h-12 opacity-80" />
+          </div>
         </div>
-    </header>
 
-    <main class="container">
-        <section class="hero">
-            <div class="hero-badge">
-                🔧 Mais de 50.000 equipamentos e ferramentas disponíveis
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100 text-sm">Aluguéis Ativos</p>
+              <p className="text-3xl font-bold mt-2">{alugueisAtivos.length}</p>
             </div>
-            <h1>
-                Alugue Equipamentos
-                <span class="gradient-title">Sem Complicação</span>
-            </h1>
-            <p class="subtitle">
-                Do martelo à betoneira, da furadeira ao notebook profissional. Todos os equipamentos e ferramentas que você precisa para seus projetos, obras e eventos. Sem investimento inicial, sem estoque parado.
-            </p>
-            
-            <div class="search-container">
-                <div class="search-box">
-                    <input type="text" class="search-input" placeholder="O que você precisa hoje? Furadeira, notebook, betoneira...">
-                    <div class="search-filters">
-                        <button class="filter-btn">📍 Localização</button>
-                        <button class="filter-btn">📅 Data</button>
-                    </div>
-                    <button class="search-btn">Buscar</button>
-                </div>
-            </div>
+            <Clock className="w-12 h-12 opacity-80" />
+          </div>
+        </div>
 
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="stat-number">50K+</div>
-                    <div class="stat-label">Equipamentos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">15K+</div>
-                    <div class="stat-label">Clientes Felizes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">98%</div>
-                    <div class="stat-label">Satisfação</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">24h</div>
-                    <div class="stat-label">Entrega Média</div>
-                </div>
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-sm">Em Manutenção</p>
+              <p className="text-3xl font-bold mt-2">{manutencoes.length}</p>
             </div>
-        </section>
+            <Wrench className="w-12 h-12 opacity-80" />
+          </div>
+        </div>
 
-        <section class="benefits">
-            <div class="benefit-card">
-                <div class="icon-wrapper">🚀</div>
-                <h3>Entrega Express</h3>
-                <p>Receba em até 2 horas com nosso serviço premium. Entrega rastreada em tempo real via app.</p>
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-100 text-sm">Receita Mensal</p>
+              <p className="text-3xl font-bold mt-2">R$ 45.2K</p>
             </div>
-            <div class="benefit-card">
-                <div class="icon-wrapper">🔒</div>
-                <h3>Seguro Total</h3>
-                <p>Todos os equipamentos com seguro incluído. Proteção completa contra danos e acidentes.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="icon-wrapper">💎</div>
-                <h3>Qualidade Premium</h3>
-                <p>Equipamentos de última geração, revisados e higienizados após cada uso.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="icon-wrapper">💰</div>
-                <h3>Preço Dinâmico</h3>
-                <p>Algoritmo inteligente que garante o melhor preço do mercado sempre.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="icon-wrapper">🤝</div>
-                <h3>Suporte 24/7</h3>
-                <p>Equipe especializada disponível a qualquer hora por chat, telefone ou WhatsApp.</p>
-            </div>
-            <div class="benefit-card">
-                <div class="icon-wrapper">📱</div>
-                <h3>App Inteligente</h3>
-                <p>Gerencie aluguéis, rastreie entregas e acesse tutoriais direto no seu celular.</p>
-            </div>
-        </section>
+            <DollarSign className="w-12 h-12 opacity-80" />
+          </div>
+        </div>
+      </div>
 
-        <section id="categorias">
-            <h2 class="section-title">Explore por Categoria</h2>
-            <p class="section-subtitle">Milhares de equipamentos organizados para você encontrar exatamente o que precisa</p>
-            <div class="categories">
-                <button class="category-card">
-                    <span class="category-icon">🔨</span>
-                    <h3>Ferramentas</h3>
-                    <p class="category-count">2.500+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">💻</span>
-                    <h3>Eletrônicos</h3>
-                    <p class="category-count">1.800+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">🏗️</span>
-                    <h3>Construção</h3>
-                    <p class="category-count">3.200+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">🌱</span>
-                    <h3>Jardinagem</h3>
-                    <p class="category-count">890+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">🎉</span>
-                    <h3>Eventos</h3>
-                    <p class="category-count">1.500+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">⚽</span>
-                    <h3>Esportivos</h3>
-                    <p class="category-count">950+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">📸</span>
-                    <h3>Fotografia</h3>
-                    <p class="category-count">670+ itens</p>
-                </button>
-                <button class="category-card">
-                    <span class="category-icon">🎵</span>
-                    <h3>Áudio & DJ</h3>
-                    <p class="category-count">540+ itens</p>
-                </button>
-            </div>
-        </section>
-
-        <section>
-            <div class="featured-header">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Aluguéis Ativos</h3>
+          <div className="space-y-3">
+            {alugueisAtivos.map(aluguel => (
+              <div key={aluguel.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
-                    <h2 class="section-title" style="margin-bottom: 10px; text-align: left;">Mais Alugados</h2>
-                    <p class="section-subtitle" style="text-align: left; margin: 0;">Os equipamentos favoritos dos nossos clientes</p>
+                  <p className="font-semibold text-gray-800">{aluguel.cliente}</p>
+                  <p className="text-sm text-gray-600">{aluguel.equipamento}</p>
+                  <p className="text-xs text-gray-500">Início: {aluguel.dataInicio}</p>
                 </div>
-                <a href="#" class="view-all">Ver todos →</a>
-            </div>
-            <div class="products">
-                <div class="product-card">
-                    <span class="product-badge">🔥 Popular</span>
-                    <div class="product-image">🔧</div>
-                    <div class="product-info">
-                        <h3>Furadeira de Impacto Bosch</h3>
-                        <p class="product-description">850W de potência, 3.000 RPM, maleta completa com brocas</p>
-                        <div class="product-details">
-                            <div class="price-container">
-                                <span class="price">R$ 45</span>
-                                <span class="price-period">por dia</span>
-                            </div>
-                            <span class="rating">⭐ 4.9 (234)</span>
-                        </div>
-                        <button class="rent-button">Reservar Agora</button>
-                    </div>
+                <div className="text-right">
+                  <p className="font-bold text-green-600">R$ {aluguel.valor.toFixed(2)}</p>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">{aluguel.status}</span>
                 </div>
-                <div class="product-card">
-                    <span class="product-badge">✨ Novo</span>
-                    <div class="product-image">💼</div>
-                    <div class="product-info">
-                        <h3>MacBook Pro M3 16"</h3>
-                        <p class="product-description">32GB RAM, 1TB SSD, ideal para edição e design</p>
-                        <div class="product-details">
-                            <div class="price-container">
-                                <span class="price">R$ 180</span>
-                                <span class="price-period">por dia</span>
-                            </div>
-                            <span class="rating">⭐ 5.0 (189)</span>
-                        </div>
-                        <button class="rent-button">Reservar Agora</button>
-                    </div>
-                </div>
-                <div class="product-card">
-                    <div class="product-image">⚙️</div>
-                    <div class="product-info">
-                        <h3>Betoneira 400L Industrial</h3>
-                        <p class="product-description">Motor elétrico 2HP, capacidade para grandes obras</p>
-                        <div class="product-details">
-                            <div class="price-container">
-                                <span class="price">R$ 95</span>
-                                <span class="price-period">por dia</span>
-                            </div>
-                            <span class="rating">⭐ 4.8 (156)</span>
-                        </div>
-                        <button class="rent-button">Reservar Agora</button>
-                    </div>
-                </div>
-                <div class="product-card">
-                    <span class="product-badge">💎 Premium</span>
-                    <div class="product-image">📸</div>
-                    <div class="product-info">
-                        <h3>Canon EOS R5 + Lentes</h3>
-                        <p class="product-description">45MP, 8K video, kit completo para profissionais</p>
-                        <div class="product-details">
-                            <div class="price-container">
-                                <span class="price">R$ 350</span>
-                                <span class="price-period">por dia</span>
-                            </div>
-                            <span class="rating">⭐ 5.0 (98)</span>
-                        </div>
-                        <button class="rent-button">Reservar Agora</button>
-                    </div>
-                </div>
-                <div class="product-card">
-                    <div class="product-image">🎵</div>
-                    <div class="product-info">
-                        <h3>Kit DJ Profissional</h3>
-                        <p class="product-description">Pioneer XDJ-RX3, caixas de som e iluminação</p>
-                        <div class="product-details">
-                            <div class="price-container">
-                                <span class="price">R$ 280</span>
-                                <span class="price-period">por dia</span>
-                            </div>
-                            <span class="rating">⭐ 4.9 (145)</span>
-                        </div>
-                        <button class="rent-button">Reservar Agora</button>
-                    </div>
-                </div>
-                <div class="product-card">
-                    <div class="product-image">🪑</div>
-                    <div class="product-info">
-                        <h3>Kit Festa Completo (100 pessoas)</h3>
-                        <p class="product-description">Mesas, cadeiras, toalhas e decoração inclusos</p>
-                        <div class="product-details">
-                            <div class="price-container">
-                                <span class="price">R$ 450</span>
-                                <span class="price-period">por dia</span>
-                            </div>
-                            <span class="rating">⭐ 4.7 (312)</span>
-                        </div>
-                        <button class="rent-button">Reservar Agora</button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="testimonials" id="depoimentos">
-            <h2 class="section-title">O Que Dizem Nossos Clientes</h2>
-            <p class="section-subtitle">Mais de 15 mil pessoas já transformaram seus projetos com a RentEasy</p>
-            <div class="testimonial-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">MC</div>
-                        <div class="testimonial-info">
-                            <h4>Maria Costa</h4>
-                            <p class="testimonial-role">Arquiteta</p>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">"Economizei mais de R$ 15 mil em equipamentos para minha reforma. O processo foi super rápido e os equipamentos chegaram em perfeito estado!"</p>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">JS</div>
-                        <div class="testimonial-info">
-                            <h4>João Silva</h4>
-                            <p class="testimonial-role">Fotógrafo Freelancer</p>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">"Consigo alugar equipamentos profissionais para cada projeto específico. Isso revolucionou meu negócio e aumentou minha margem de lucro!"</p>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">AS</div>
-                        <div class="testimonial-info">
-                            <h4>Ana Santos</h4>
-                            <p class="testimonial-role">Organizadora de Eventos</p>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">"A RentEasy é minha parceira em todos os eventos. Entrega pontual, equipamentos impecáveis e suporte excepcional. Não trabalho sem eles!"</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="cta-section">
-            <div class="cta-content">
-                <h2>Pronto Para Começar?</h2>
-                <p>Cadastre-se agora e ganhe R$ 50 de desconto no seu primeiro aluguel</p>
-                <div class="cta-buttons">
-                    <button class="btn-cta-primary">Criar Conta Grátis</button>
-                    <button class="btn-cta-secondary">Conhecer Planos</button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer id="contato">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-column">
-                    <div class="footer-logo">⚡ RentEasy</div>
-                    <p class="footer-text">Transformando a forma como você aluga equipamentos. Tecnologia, confiança e economia em uma única plataforma.</p>
-                    <div class="social-links">
-                        <button class="social-btn">📘</button>
-                        <button class="social-btn">📷</button>
-                        <button class="social-btn">🐦</button>
-                        <button class="social-btn">💼</button>
-                    </div>
-                </div>
-                <div class="footer-column">
-                    <h4>Categorias</h4>
-                    <ul>
-                        <li><a href="#">→ Ferramentas Elétricas</a></li>
-                        <li><a href="#">→ Equipamentos de Construção</a></li>
-                        <li><a href="#">→ Tecnologia</a></li>
-                        <li><a href="#">→ Eventos & Festas</a></li>
-                        <li><a href="#">→ Jardinagem</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Empresa</h4>
-                    <ul>
-                        <li><a href="#">→ Sobre Nós</a></li>
-                        <li><a href="#">→ Como Funciona</a></li>
-                        <li><a href="#">→ Seja Parceiro</a></li>
-                        <li><a href="#">→ Carreiras</a></li>
-                        <li><a href="#">→ Blog</a></li>
-                    </ul>
-                </div>
-                <div class="footer-column">
-                    <h4>Suporte</h4>
-                    <ul>
-                        <li><a href="#">→ Central de Ajuda</a></li>
-                        <li><a href="#">→ Termos de Uso</a></li>
-                        <li><a href="#">→ Política de Privacidade</a></li>
-                        <li><a href="#">→ Seguro & Proteção</a></li>
-                        <li style="color: #94a3b8; margin-top: 15px;">📧 contato@renteasy.com</li>
-                        <li style="color: #94a3b8;">📱 (11) 99999-9999</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 RentEasy. Todos os direitos reservados.</p>
-                <div class="footer-links">
-                    <a href="#">Termos</a>
-                    <a href="#">Privacidade</a>
-                    <a href="#">Cookies</a>
-                </div>
-            </div>
+              </div>
+            ))}
+          </div>
         </div>
-    </footer>
 
-    <script>
-        // Animated particles background
-        const particlesContainer = document.getElementById('particles');
-        for (let i = 0; i < 30; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.top = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 15 + 's';
-            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-            particlesContainer.appendChild(particle);
-        }
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Manutenções em Andamento</h3>
+          <div className="space-y-3">
+            {manutencoes.map(manutencao => (
+              <div key={manutencao.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-semibold text-gray-800">{manutencao.equipamento}</p>
+                  <p className="text-sm text-gray-600">{manutencao.fornecedor}</p>
+                  <p className="text-xs text-gray-500">Início: {manutencao.inicio}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-orange-600">R$ {manutencao.custo.toFixed(2)}</p>
+                  <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">{manutencao.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
-        // Header scroll effect
-        const header = document.getElementById('header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
-            }
-        });
+  // Catálogo de Equipamentos
+  const Catalogo = () => {
+    const equipamentosFiltrados = equipamentos.filter(eq => 
+      eq.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      eq.modelo.toLowerCase().includes(busca.toLowerCase()) ||
+      eq.categoria.toLowerCase().includes(busca.toLowerCase())
+    );
 
-        // Smooth scroll for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-gray-800">Catálogo de Equipamentos</h2>
+          <div className="relative">
+            <ShoppingCart className="w-6 h-6 text-gray-600" />
+            {carrinho.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {carrinho.length}
+              </span>
+            )}
+          </div>
+        </div>
 
-        // Product card interactions
-        document.querySelectorAll('.product-card').forEach(card => {
-            card.addEventListener('click', function(e) {
-                if (!e.target.classList.contains('rent-button')) {
-                    console.log('Product card clicked');
-                }
-            });
-        });
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Buscar equipamentos..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
-        document.querySelectorAll('.rent-button').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.stopPropagation();
-                this.textContent = '✓ Adicionado!';
-                this.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-                setTimeout(() => {
-                    this.textContent = 'Reservar Agora';
-                    this.style.background = 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
-                }, 2000);
-            });
-        });
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {equipamentosFiltrados.map(equipamento => (
+            <div key={equipamento.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 h-48 flex items-center justify-center">
+                <Package className="w-20 h-20 text-gray-400" />
+              </div>
+              <div className="p-4">
+                <h3 className="font-bold text-gray-800 mb-1">{equipamento.nome}</h3>
+                <p className="text-sm text-gray-600 mb-2">{equipamento.modelo}</p>
+                <p className="text-xs text-gray-500 mb-3">{equipamento.categoria}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-2xl font-bold text-blue-600">R$ {equipamento.preco.toFixed(2)}</span>
+                  <span className="text-xs text-gray-500">/dia</span>
+                </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-gray-600">Estoque: {equipamento.estoque}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${equipamento.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {equipamento.status}
+                  </span>
+                </div>
+                <button
+                  onClick={() => adicionarAoCarrinho(equipamento)}
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <ShoppingCart className="w-4 h-4" />
+                  Adicionar ao Carrinho
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
-        // Category card interactions
-        document.querySelectorAll('.category-card').forEach(card => {
-            card.addEventListener('click', function() {
-                console.log('Category clicked:', this.querySelector('h3').textContent);
-            });
-        });
+  // Carrinho de Compras
+  const CarrinhoCompras = () => (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold text-gray-800">Carrinho de Aluguel</h2>
+      
+      {carrinho.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+          <ShoppingCart className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+          <p className="text-xl text-gray-600">Seu carrinho está vazio</p>
+          <button
+            onClick={() => setPaginaAtual('catalogo')}
+            className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Explorar Equipamentos
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            {carrinho.map(item => (
+              <div key={item.id} className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gray-100 rounded-lg p-4">
+                    <Package className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-800">{item.nome}</h3>
+                    <p className="text-sm text-gray-600">{item.modelo}</p>
+                    <p className="text-xs text-gray-500">{item.categoria}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-600">R$ {item.preco.toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 mb-2">/dia</p>
+                  <button
+                    onClick={() => removerDoCarrinho(item.id)}
+                    className="text-red-600 text-sm hover:text-red-700"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
 
-        // Search functionality
-        document.querySelector('.search-btn').addEventListener('click', function() {
-            const searchInput = document.querySelector('.search-input');
-            if (searchInput.value.trim()) {
-                console.log('Searching for:', searchInput.value);
-                this.textContent = '🔍 Buscando...';
-                setTimeout(() => {
-                    this.textContent = 'Buscar';
-                }, 1500);
-            }
-        });
+          <div className="bg-white rounded-xl shadow-lg p-6 h-fit">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Resumo do Pedido</h3>
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between text-gray-600">
+                <span>Subtotal (1 dia)</span>
+                <span>R$ {calcularTotalCarrinho().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Taxa de serviço</span>
+                <span>R$ 0,00</span>
+              </div>
+              <div className="border-t pt-3 flex justify-between text-xl font-bold text-gray-800">
+                <span>Total</span>
+                <span>R$ {calcularTotalCarrinho().toFixed(2)}</span>
+              </div>
+            </div>
+            <button className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-bold">
+              Finalizar Aluguel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
-        // Enter key on search
-        document.querySelector('.search-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.querySelector('.search-btn').click();
-            }
-        });
-    </script>
-</body>
-</html>
+  // Aluguéis
+  const Alugueis = () => (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold text-gray-800">Gerenciar Aluguéis</h2>
+      
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipamento</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Início</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {alugueisAtivos.map(aluguel => (
+                <tr key={aluguel.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{aluguel.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">{aluguel.cliente}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{aluguel.equipamento}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{aluguel.dataInicio}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">R$ {aluguel.valor.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                      {aluguel.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <button className="text-blue-600 hover:text-blue-700 mr-3">Ver</button>
+                    <button className="text-green-600 hover:text-green-700">Finalizar</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Menu Lateral
+  const menuItems = [
+    { id: 'dashboard', nome: 'Dashboard', icone: Home },
+    { id: 'catalogo', nome: 'Catálogo', icone: Package },
+    { id: 'carrinho', nome: 'Carrinho', icone: ShoppingCart },
+    { id: 'alugueis', nome: 'Aluguéis', icone: FileText },
+    { id: 'clientes', nome: 'Clientes', icone: Users },
+    { id: 'manutencao', nome: 'Manutenção', icone: Wrench },
+    { id: 'relatorios', nome: 'Relatórios', icone: BarChart3 },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setMenuAberto(!menuAberto)}
+              className="lg:hidden text-gray-600 hover:text-gray-800"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 rounded-lg p-2">
+                <Package className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">EquipRent</h1>
+                <p className="text-xs text-gray-600">Sistema de Aluguel</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <ShoppingCart className="w-6 h-6 text-gray-600 cursor-pointer" onClick={() => setPaginaAtual('carrinho')} />
+              {carrinho.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {carrinho.length}
+                </span>
+              )}
+            </div>
+            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+              A
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <aside className={`bg-white shadow-lg h-[calc(100vh-73px)] w-64 fixed lg:sticky top-[73px] left-0 transition-transform ${menuAberto ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} z-40`}>
+          <nav className="p-4 space-y-2">
+            {menuItems.map(item => {
+              const Icon = item.icone;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setPaginaAtual(item.id);
+                    setMenuAberto(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    paginaAtual === item.id
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.nome}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6 lg:ml-0">
+          {paginaAtual === 'dashboard' && <Dashboard />}
+          {paginaAtual === 'catalogo' && <Catalogo />}
+          {paginaAtual === 'carrinho' && <CarrinhoCompras />}
+          {paginaAtual === 'alugueis' && <Alugueis />}
+          {paginaAtual === 'clientes' && (
+            <div className="text-center py-20">
+              <Users className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+              <p className="text-xl text-gray-600">Módulo de Clientes em desenvolvimento</p>
+            </div>
+          )}
+          {paginaAtual === 'manutencao' && (
+            <div className="text-center py-20">
+              <Wrench className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+              <p className="text-xl text-gray-600">Módulo de Manutenção em desenvolvimento</p>
+            </div>
+          )}
+          {paginaAtual === 'relatorios' && (
+            <div className="text-center py-20">
+              <BarChart3 className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+              <p className="text-xl text-gray-600">Módulo de Relatórios em desenvolvimento</p>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default SistemaAluguelEquipamentos;
